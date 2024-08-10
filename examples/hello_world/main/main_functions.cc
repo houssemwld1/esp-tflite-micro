@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/system_setup.h"
@@ -23,47 +22,97 @@ limitations under the License.
 #include "model.h"
 #include "constants.h"
 #include "output_handler.h"
-
+#include "esp_heap_caps.h"
 // Globals, used for compatibility with Arduino-style sketches.
-namespace {
-const tflite::Model* model = nullptr;
-tflite::MicroInterpreter* interpreter = nullptr;
-TfLiteTensor* input = nullptr;
-TfLiteTensor* output = nullptr;
-int inference_count = 0;
+namespace
+{
+  const tflite::Model *model = nullptr;
+  tflite::MicroInterpreter *interpreter = nullptr;
+  TfLiteTensor *input = nullptr;
+  TfLiteTensor *output = nullptr;
+  int inference_count = 0;
 
-constexpr int kTensorArenaSize = 2000;
-uint8_t tensor_arena[kTensorArenaSize];
-}  // namespace
+  constexpr int kTensorArenaSize = 100 * 1024; // Adjust as needed
+  uint8_t tensor_arena[kTensorArenaSize];
+} // namespace
 
 // The name of this function is important for Arduino compatibility.
-void setup() {
+void setup()
+{
   // Map the model into a usable data structure. This doesn't involve any
   // copying or parsing, it's a very lightweight operation.
   model = tflite::GetModel(g_model);
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
+  if (model->version() != TFLITE_SCHEMA_VERSION)
+  {
     MicroPrintf("Model provided is schema version %d not equal to supported "
-                "version %d.", model->version(), TFLITE_SCHEMA_VERSION);
+                "version %d.",
+                model->version(), TFLITE_SCHEMA_VERSION);
     return;
   }
 
   // Pull in only the operation implementations we need.
-  static tflite::MicroMutableOpResolver<1> resolver;
-  if (resolver.AddFullyConnected() != kTfLiteOk) {
+  // Pull in only the operation implementations we need.
+  static tflite::MicroMutableOpResolver<27> resolver; // Adjust the size as needed
+  if (resolver.AddConv2D() != kTfLiteOk)
     return;
-  }
-
+  if (resolver.AddMaxPool2D() != kTfLiteOk)
+    return;
+  if (resolver.AddFullyConnected() != kTfLiteOk)
+    return;
+  if (resolver.AddSoftmax() != kTfLiteOk)
+    return;
+  if (resolver.AddReshape() != kTfLiteOk)
+    return;
+  if (resolver.AddStridedSlice() != kTfLiteOk)
+    return;
+  if (resolver.AddPack() != kTfLiteOk)
+    return; // Add PACK operator
+  if (resolver.AddQuantize() != kTfLiteOk)
+    return; // Add QUANTIZE operator
+  if (resolver.AddDequantize() != kTfLiteOk)
+    return; // Add DEQUANTIZE operator
+  // add while op
+  if (resolver.AddWhile() != kTfLiteOk)
+    return;
+  if (resolver.AddLess() != kTfLiteOk)
+    return;
   // Build an interpreter to run the model with.
+  if (resolver.AddGreater() != kTfLiteOk)
+    return; // Add GREATER operator
+  if (resolver.AddLogicalAnd() != kTfLiteOk)
+    return; // Add LOGICAL_AND operator
+  if (resolver.AddAdd() != kTfLiteOk)
+    return; // Add ADD operator
+  if (resolver.AddGather() != kTfLiteOk)
+    return; // Add GATHER operator
+  if (resolver.AddSplit() != kTfLiteOk)
+    return; // Add SPLIT operator
+  if (resolver.AddLogistic() != kTfLiteOk)
+    return; // Add SUB operator
+  if (resolver.AddMul() != kTfLiteOk)
+    return; // Add MUL operator
+  if (resolver.AddTanh() != kTfLiteOk)
+    return; // Add TANH operator
+  if (resolver.AddExpandDims() != kTfLiteOk)
+    return; // Add EXPAND_DIMS operator
+
+  if (resolver.AddFill() != kTfLiteOk)
+    return; // Add EQUAL operator
+  if (resolver.AddSub() != kTfLiteOk)
+    return; // Add SUB operator
   static tflite::MicroInterpreter static_interpreter(
       model, resolver, tensor_arena, kTensorArenaSize);
   interpreter = &static_interpreter;
+  monitor_heap_memory();
 
   // Allocate memory from the tensor_arena for the model's tensors.
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
-  if (allocate_status != kTfLiteOk) {
+  if (allocate_status != kTfLiteOk)
+  {
     MicroPrintf("AllocateTensors() failed");
     return;
   }
+  monitor_heap_memory();
 
   // Obtain pointers to the model's input and output tensors.
   input = interpreter->input(0);
@@ -73,12 +122,22 @@ void setup() {
   inference_count = 0;
 }
 
+// monitor heap memory
+void monitor_heap_memory()
+{
+  size_t free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  size_t minimum = heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT);
+  MicroPrintf("Free: %d, Minimum free: %d\n", free, minimum);
+}
+
 // The name of this function is important for Arduino compatibility.
-void loop() {
+void loop()
+{
   // Calculate an x value to feed into the model. We compare the current
   // inference_count to the number of inferences per cycle to determine
   // our position within the range of possible x values the model was
   // trained on, and use this to calculate a value.
+  monitor_heap_memory();
   float position = static_cast<float>(inference_count) /
                    static_cast<float>(kInferencesPerCycle);
   float x = position * kXrange;
@@ -87,12 +146,12 @@ void loop() {
   int8_t x_quantized = x / input->params.scale + input->params.zero_point;
   // Place the quantized input in the model's input tensor
   input->data.int8[0] = x_quantized;
-
   // Run inference, and report any error
   TfLiteStatus invoke_status = interpreter->Invoke();
-  if (invoke_status != kTfLiteOk) {
+  if (invoke_status != kTfLiteOk)
+  {
     MicroPrintf("Invoke failed on x: %f\n",
-                         static_cast<double>(x));
+                static_cast<double>(x));
     return;
   }
 
@@ -104,9 +163,13 @@ void loop() {
   // Output the results. A custom HandleOutput function can be implemented
   // for each supported hardware target.
   HandleOutput(x, y);
+  monitor_heap_memory();
 
   // Increment the inference_counter, and reset it if we have reached
   // the total number per cycle
   inference_count += 1;
-  if (inference_count >= kInferencesPerCycle) inference_count = 0;
+  if (inference_count >= kInferencesPerCycle)
+    inference_count = 0;
+
+  monitor_heap_memory();
 }
