@@ -32,7 +32,7 @@ namespace
   TfLiteTensor *output = nullptr;
   int inference_count = 0;
 
-  constexpr int kTensorArenaSize = 100 * 1024; // Adjust as needed
+  constexpr int kTensorArenaSize = 80 * 1024; // Adjust as needed
   uint8_t tensor_arena[kTensorArenaSize];
 } // namespace
 
@@ -52,7 +52,7 @@ void setup()
 
   // Pull in only the operation implementations we need.
   // Pull in only the operation implementations we need.
-  static tflite::MicroMutableOpResolver<27> resolver; // Adjust the size as needed
+  static tflite::MicroMutableOpResolver<30> resolver; // Adjust the size as needed
   if (resolver.AddConv2D() != kTfLiteOk)
     return;
   if (resolver.AddMaxPool2D() != kTfLiteOk)
@@ -100,6 +100,12 @@ void setup()
     return; // Add EQUAL operator
   if (resolver.AddSub() != kTfLiteOk)
     return; // Add SUB operator
+  if (resolver.AddConcatenation() != kTfLiteOk)
+    return; // Add CONCATENATION operator
+  if (resolver.AddAveragePool2D() != kTfLiteOk)
+    return; // Add AVERAGE_POOL_2D operator
+  //add reversev2 op
+
   static tflite::MicroInterpreter static_interpreter(
       model, resolver, tensor_arena, kTensorArenaSize);
   interpreter = &static_interpreter;
@@ -117,6 +123,10 @@ void setup()
   // Obtain pointers to the model's input and output tensors.
   input = interpreter->input(0);
   output = interpreter->output(0);
+
+  
+  size_t used_bytes = interpreter->arena_used_bytes();
+  MicroPrintf("Memory used by tensors: %d bytes", used_bytes);
 
   // Keep track of how many inferences we have performed.
   inference_count = 0;
