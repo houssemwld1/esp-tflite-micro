@@ -16,8 +16,17 @@ limitations under the License.
 #include "output_handler.h"
 #include "tensorflow/lite/micro/micro_log.h"
 
-void HandleOutput(float x_value, float y_value) {
-  // Log the current X and Y values
-  MicroPrintf("x_value: %f, y_value: %f", static_cast<double>(x_value),
-              static_cast<double>(y_value));
+// Assuming you have a predefined array of class names or labels
+const char* class_names[] = {"NO_ACTIVITY","PET","RUN","WALK"};
+
+void HandleOutput(int predicted_class_index) {
+    // Log the predicted class index
+    if (predicted_class_index >= 0 && predicted_class_index < sizeof(class_names) / sizeof(class_names[0])) {
+        // Log the predicted class
+        MicroPrintf("Predicted class index: %d, Class name: %s",
+                    predicted_class_index, class_names[predicted_class_index]);
+    } else {
+        // Log an error message if the predicted index is out of bounds
+        MicroPrintf("Predicted class index out of bounds: %d", predicted_class_index);
+    }
 }
