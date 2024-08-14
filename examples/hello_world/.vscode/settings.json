@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "algorithm": "cpp",
+        "memory": "cpp",
+        "random": "cpp",
+        "iosfwd": "cpp",
+        "iostream": "cpp",
+        "istream": "cpp",
+        "numeric": "cpp",
+        "ostream": "cpp",
+        "ratio": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "__config": "cpp",
+        "__tuple": "cpp",
+        "bit": "cpp",
+        "charconv": "cpp",
+        "locale": "cpp",
+        "unordered_map": "cpp"
+    }
+}
