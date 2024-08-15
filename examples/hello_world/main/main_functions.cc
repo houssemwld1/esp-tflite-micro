@@ -14,6 +14,7 @@
 #include "csi_matrices.h"
 #include "image_generator.h"
 #include "wifi.h"
+#include "mqtt.h"
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
 #define STB_IMAGE_WRITE_IMPLEMENTATION
