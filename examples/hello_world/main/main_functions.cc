@@ -140,7 +140,9 @@ namespace
 
 void setup()
 { 
+  //init wifi 
   WIFI_CONNECT();
+  // Initialize the TensorFlow Lite interpreter
   model = tflite::GetModel(g_model);
   if (model->version() != TFLITE_SCHEMA_VERSION)
   {
