@@ -140,9 +140,12 @@ namespace
 }
 
 void setup()
-{ 
-  //init wifi 
+{
+  // init wifi
   WIFI_CONNECT();
+  // init mqtt
+  priseStruct prise;
+  mqtt_app_init(&prise);
   // Initialize the TensorFlow Lite interpreter
   model = tflite::GetModel(g_model);
   if (model->version() != TFLITE_SCHEMA_VERSION)
@@ -208,13 +211,6 @@ void setup()
   // printf("shape of output tensor : %d\n", output->dims->size);
   // printf("output tensor shape : %d\n", output->dims->data[0]);
   // printf("output tensor shape : %d\n", output->dims->data[1]);
-
-  MicroPrintf("Generating images from matrices\n");
-  inference_count = 0;
-}
-
-void loop()
-{
   generateImagesFromMatrices();
   printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
 
@@ -228,6 +224,13 @@ void loop()
       }
     }
   }
+
+  MicroPrintf("Generating images from matrices\n");
+  inference_count = 0;
+}
+
+void loop()
+{
 
   if (interpreter->Invoke() != kTfLiteOk)
   {

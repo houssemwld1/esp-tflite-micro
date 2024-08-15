@@ -6,19 +6,13 @@
 #include "esp_tls.h"
 #include "wifi.h"
 #include <stdlib.h>
-#include "log.h"
-#include "file_syst.h"
-#include "bl0937.h"
 
 /* Constants */
 static const char *TAG = "MQTT";
 extern priseStruct prise;
-extern logElement e;
-extern Queue *queue;
 static int DISCONNECT_LOGS_mqtt_once = 0;
 static int retry_Dis_mqtt = 0;
 static int retry = 0;
-logElement tmp;
 char data2send[64];
 char TB_TEST[15];
 
@@ -58,16 +52,16 @@ static mqtt_on_connected_cb_t on_connected_cb = NULL;
 static mqtt_on_disconnected_cb_t on_disconnected_cb = NULL;
 
 /*fonction de test en publiant une partie de la partition active  */
-static void send_binary(esp_mqtt_client_handle_t client)
-{
-    spi_flash_mmap_handle_t out_handle;
-    const void *binary_address;
-    const esp_partition_t *partition = esp_ota_get_running_partition();
-    esp_partition_mmap(partition, 0, partition->size, SPI_FLASH_MMAP_DATA, &binary_address, &out_handle);
-    int binary_size = MIN(CONFIG_BROKER_BIN_SIZE_TO_SEND, partition->size);
-    int msg_id = esp_mqtt_client_publish(client, "/topic/binary", binary_address, binary_size, 0, 0);
-    ESP_LOGI(TAG, "binary sent with msg_id=%d", msg_id);
-}
+// static void send_binary(esp_mqtt_client_handle_t client)
+// {
+//     spi_flash_mmap_handle_t out_handle;
+//     const void *binary_address;
+//     const esp_partition_t *partition = esp_ota_get_running_partition();
+//     esp_partition_mmap(partition, 0, partition->size, SPI_FLASH_MMAP_DATA, &binary_address, &out_handle);
+//     int binary_size = MIN(CONFIG_BROKER_BIN_SIZE_TO_SEND, partition->size);
+//     int msg_id = esp_mqtt_client_publish(client, "/topic/binary", binary_address, binary_size, 0, 0);
+//     ESP_LOGI(TAG, "binary sent with msg_id=%d", msg_id);
+// }
 /*
 void listWifiScan(esp_mqtt_client_handle_t client)
 {
@@ -84,7 +78,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     esp_mqtt_event_handle_t event = event_data;
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
-    logElement *element;
     switch ((esp_mqtt_event_id_t)event_id)
     {
     case MQTT_EVENT_CONNECTED:
@@ -193,11 +186,11 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         TBI_prediction(event, client, &prise);
         TBI_configs_state_machine(event, client, &prise);
 
-        if (strncmp(event->data, "send binary please", event->data_len) == 0)
-        {
-            ESP_LOGI(TAG, "Sending the binary");
-            send_binary(client);
-        }
+        // if (strncmp(event->data, "send binary please", event->data_len) == 0)
+        // {
+        //     ESP_LOGI(TAG, "Sending the binary");
+        //     send_binary(client);
+        // }
         TBI_publishAttributes(&prise, client);
 
         break;
