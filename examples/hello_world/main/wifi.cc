@@ -190,7 +190,6 @@ void wifi_init_sta(void)
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     // Enable promiscuous mode
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
-    ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(promisc_cb));
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
