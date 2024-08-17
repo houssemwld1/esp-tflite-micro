@@ -193,17 +193,17 @@ void csi_data_print_task(void *arg)
     }
 }
 
-void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
-{
-    wifi_csi_filtered_info_t *q_data = malloc(sizeof(wifi_csi_filtered_info_t) + info->valid_len);
-    *q_data = *info;
-    memcpy(q_data->valid_data, info->valid_data, info->valid_len);
+// void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
+// {
+//     wifi_csi_filtered_info_t *q_data = malloc(sizeof(wifi_csi_filtered_info_t) + info->valid_len);
+//     *q_data = *info;
+//     memcpy(q_data->valid_data, info->valid_data, info->valid_len);
 
-    if (!g_csi_info_queue || xQueueSend(g_csi_info_queue, &q_data, 0) == pdFALSE)
-    {
-        free(q_data);
-    }
-}
+//     if (!g_csi_info_queue || xQueueSend(g_csi_info_queue, &q_data, 0) == pdFALSE)
+//     {
+//         free(q_data);
+//     }
+// }
 
 void radar_config(sensingStruct *sensing)
 { // 30:ae:a4:99:22:f4
