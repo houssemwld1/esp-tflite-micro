@@ -1,5 +1,3 @@
-
-
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/system_setup.h"
@@ -15,14 +13,20 @@
 #include "image_generator.h"
 #include "wifi.h"
 #include "mqtt.h"
+#include "wifi_sensing.h"
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 static float flatImage[1][3][625][1]; // Static to retain its value across function calls
+extern esp_mqtt_client_handle_t client_mqtt;
+extern char bufDataString_data[700];
+char dataPrediction[100];
+extern float Amp[57][28];
 
 size_t peak_memory_usage = 0;
+sensingStruct sensing;
 void monitor_heap_memory()
 {
   size_t free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
@@ -143,9 +147,13 @@ void setup()
 {
   // init wifi
   WIFI_CONNECT();
+  mqtt_app_start();
+  printf("sensing routine\n", sensing.bufDataString );
+  Sensing_routine(&sensing);
+
+  // Sensing_routine(&sensing);
   // init mqtt
-  priseStruct prise;
-  mqtt_app_init(&prise);
+  // priseStruct prise;
   // Initialize the TensorFlow Lite interpreter
   model = tflite::GetModel(g_model);
   if (model->version() != TFLITE_SCHEMA_VERSION)
@@ -211,19 +219,19 @@ void setup()
   // printf("shape of output tensor : %d\n", output->dims->size);
   // printf("output tensor shape : %d\n", output->dims->data[0]);
   // printf("output tensor shape : %d\n", output->dims->data[1]);
-  generateImagesFromMatrices();
-  printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
+  // generateImagesFromMatrices();
+  // printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
 
-  for (int i = 0; i < input->dims->data[1]; i++)
-  {
-    for (int j = 0; j < input->dims->data[2]; j++)
-    {
-      for (int k = 0; k < input->dims->data[3]; k++)
-      {
-        input->data.f[(i * input->dims->data[2] + j) * input->dims->data[3] + k] = flatImage[0][i][j][k];
-      }
-    }
-  }
+  // for (int i = 0; i < input->dims->data[1]; i++)
+  // {
+  //   for (int j = 0; j < input->dims->data[2]; j++)
+  //   {
+  //     for (int k = 0; k < input->dims->data[3]; k++)
+  //     {
+  //       input->data.f[(i * input->dims->data[2] + j) * input->dims->data[3] + k] = flatImage[0][i][j][k];
+  //     }
+  //   }
+  // }
 
   MicroPrintf("Generating images from matrices\n");
   inference_count = 0;
@@ -231,7 +239,12 @@ void setup()
 
 void loop()
 {
-
+  printf("bufDataString from main setup : %s\n", bufDataString_data);
+  // show bufDataString_data[700]
+  for (int i = 0; i < 700; i++)
+  {
+    printf("%c", bufDataString_data[i]);
+  }
   if (interpreter->Invoke() != kTfLiteOk)
   {
     MicroPrintf("Invoke failed");
@@ -243,6 +256,9 @@ void loop()
   {
     printf("%f ", output->data.f[i]);
   }
+  sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
+  int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
+
   printf("\n");
   int max_index = 0;
   float max_value = output->data.f[0];
