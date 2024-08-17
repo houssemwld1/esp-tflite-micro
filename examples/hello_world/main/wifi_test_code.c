@@ -29,7 +29,7 @@
 #include "wifi_test_code.h"
 #include "esp_now.h"
 
-#define QUEUE_SIZE 64 // Adjust based on your needs
+#define QUEUE_SIZE 10 // Adjust based on your needs
 
 const char *TAG = "SENSING_C";
 const char *WIFI_TAG = "wifi_station";
