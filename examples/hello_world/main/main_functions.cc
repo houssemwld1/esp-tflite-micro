@@ -11,9 +11,10 @@
 #include "esp_spiffs.h"
 #include "csi_matrices.h"
 #include "image_generator.h"
-#include "wifi.h"
+// #include "wifi.h"
 #include "mqtt.h"
-#include "wifi_sensing.h"
+#include "wifi_test_code.h"
+// #include "wifi_sensing.h"
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -143,12 +144,11 @@ namespace
   uint8_t tensor_arena[kTensorArenaSize];
 }
 
-void setup()
+void setup()  
 {
-  // init wifi
-  WIFI_CONNECT();
-  mqtt_app_start();
-  Sensing_routine(&sensing);
+  app_main_wifi();
+  // mqtt_app_start();
+
 
   // Sensing_routine(&sensing);
   // init mqtt
@@ -243,27 +243,27 @@ void loop()
     return;
   }
 
-  MicroPrintf("Inference output:");
-  for (int i = 0; i < output->dims->data[1]; i++)
-  {
-    printf("%f ", output->data.f[i]);
-  }
-  sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
-  int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
+  // MicroPrintf("Inference output:");
+  // for (int i = 0; i < output->dims->data[1]; i++)
+  // {
+  //   printf("%f ", output->data.f[i]);
+  // }
+  // sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
+  // int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
 
-  printf("\n");
-  int max_index = 0;
-  float max_value = output->data.f[0];
-  for (int i = 1; i < output->dims->data[1]; i++)
-  {
-    if (output->data.f[i] > max_value)
-    {
-      max_value = output->data.f[i];
-      max_index = i;
-    }
-  }
+  // printf("\n");
+  // int max_index = 0;
+  // float max_value = output->data.f[0];
+  // for (int i = 1; i < output->dims->data[1]; i++)
+  // {
+  //   if (output->data.f[i] > max_value)
+  //   {
+  //     max_value = output->data.f[i];
+  //     max_index = i;
+  //   }
+  // }
 
-  HandleOutput(max_index);
+  // HandleOutput(max_index);
 
   monitor_heap_memory();
   inference_count += 1;
