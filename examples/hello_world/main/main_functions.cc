@@ -208,18 +208,9 @@ void setup()
   size_t used_bytes = interpreter->arena_used_bytes();
   MicroPrintf("Memory used by tensors: %zu bytes", used_bytes);
 
-  // printf("shape of input tensor : %d\n", input->dims->size);
-  // printf("input tensor size : %d\n", input->dims->size);
-  // printf("input tensor shape : %d\n", input->dims->data[0]);
-  // printf("input tensor shape : %d\n", input->dims->data[1]);
-  // printf("input tensor shape : %d\n", input->dims->data[2]);
-  // printf("input tensor shape : %d\n", input->dims->data[3]);
-
-  // printf("shape of output tensor : %d\n", output->dims->size);
-  // printf("output tensor shape : %d\n", output->dims->data[0]);
-  // printf("output tensor shape : %d\n", output->dims->data[1]);
-  // generateImagesFromMatrices();
-  // printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
+ 
+  generateImagesFromMatrices();
+  printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
 
   // for (int i = 0; i < input->dims->data[1]; i++)
   // {
@@ -252,27 +243,27 @@ void loop()
     return;
   }
 
-  // MicroPrintf("Inference output:");
-  // for (int i = 0; i < output->dims->data[1]; i++)
-  // {
-  //   printf("%f ", output->data.f[i]);
-  // }
-  // sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
-  // int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
+  MicroPrintf("Inference output:");
+  for (int i = 0; i < output->dims->data[1]; i++)
+  {
+    printf("%f ", output->data.f[i]);
+  }
+  sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
+  int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
 
-  // printf("\n");
-  // int max_index = 0;
-  // float max_value = output->data.f[0];
-  // for (int i = 1; i < output->dims->data[1]; i++)
-  // {
-  //   if (output->data.f[i] > max_value)
-  //   {
-  //     max_value = output->data.f[i];
-  //     max_index = i;
-  //   }
-  // }
+  printf("\n");
+  int max_index = 0;
+  float max_value = output->data.f[0];
+  for (int i = 1; i < output->dims->data[1]; i++)
+  {
+    if (output->data.f[i] > max_value)
+    {
+      max_value = output->data.f[i];
+      max_index = i;
+    }
+  }
 
-  // HandleOutput(max_index);
+  HandleOutput(max_index);
 
   monitor_heap_memory();
   inference_count += 1;
