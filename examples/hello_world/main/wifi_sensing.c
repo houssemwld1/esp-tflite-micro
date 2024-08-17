@@ -113,7 +113,9 @@ void cmd_register_radar(void)
 }
 
 void csi_data_print_task(void *arg)
-{
+{   
+    // check if this works 
+    printf("csi_data_print_task\n");
     wifi_csi_filtered_info_t *info = NULL;
     char *buffer = malloc(5 * 1024);
     static uint32_t count = 0;
@@ -124,7 +126,7 @@ void csi_data_print_task(void *arg)
     float tmp;
     while (xQueueReceive(g_csi_info_queue, &info, portMAX_DELAY))
     {
-
+        printf("xQueueReceive\n");
         size_t len = 0;
         wifi_pkt_rx_ctrl_t *rx_ctrl = &info->rx_ctrl;
         if (!count)
@@ -208,7 +210,7 @@ void radar_config(sensingStruct *sensing)
     wifi_radar_config_t radar_config = {
         //   .wifi_radar_cb = wifi_radar_cb,
         .wifi_csi_filtered_cb = wifi_csi_raw_cb,
-        .filter_mac = {0x40, 0x4C, 0xCA, 0x88, 0xB6, 0x18},
+        .filter_mac = {0x30, 0xae, 0xa4, 0x99, 0x22, 0xf4},
     };
     // esp_radar_init();
     // esp_radar_set_config(&radar_config);

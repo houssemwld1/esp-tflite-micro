@@ -148,7 +148,6 @@ void setup()
   // init wifi
   WIFI_CONNECT();
   mqtt_app_start();
-  printf("sensing routine\n", sensing.bufDataString );
   Sensing_routine(&sensing);
 
   // Sensing_routine(&sensing);
@@ -239,39 +238,41 @@ void setup()
 
 void loop()
 {
-  printf("bufDataString from main setup : %s\n", bufDataString_data);
-  // show bufDataString_data[700]
-  for (int i = 0; i < 700; i++)
-  {
-    printf("%c", bufDataString_data[i]);
-  }
+  // printf("bufDataString from main setup : %s\n", bufDataString_data);
+  // // show bufDataString_data[700]
+  
+  // for (int i = 0; i < 700; i++)
+  // {
+  //   printf("csi_data %c", bufDataString_data[i]);
+  // }
+
   if (interpreter->Invoke() != kTfLiteOk)
   {
     MicroPrintf("Invoke failed");
     return;
   }
 
-  MicroPrintf("Inference output:");
-  for (int i = 0; i < output->dims->data[1]; i++)
-  {
-    printf("%f ", output->data.f[i]);
-  }
-  sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
-  int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
+  // MicroPrintf("Inference output:");
+  // for (int i = 0; i < output->dims->data[1]; i++)
+  // {
+  //   printf("%f ", output->data.f[i]);
+  // }
+  // sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
+  // int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
 
-  printf("\n");
-  int max_index = 0;
-  float max_value = output->data.f[0];
-  for (int i = 1; i < output->dims->data[1]; i++)
-  {
-    if (output->data.f[i] > max_value)
-    {
-      max_value = output->data.f[i];
-      max_index = i;
-    }
-  }
+  // printf("\n");
+  // int max_index = 0;
+  // float max_value = output->data.f[0];
+  // for (int i = 1; i < output->dims->data[1]; i++)
+  // {
+  //   if (output->data.f[i] > max_value)
+  //   {
+  //     max_value = output->data.f[i];
+  //     max_index = i;
+  //   }
+  // }
 
-  HandleOutput(max_index);
+  // HandleOutput(max_index);
 
   monitor_heap_memory();
   inference_count += 1;
