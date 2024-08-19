@@ -11,9 +11,10 @@
 #include "esp_spiffs.h"
 #include "csi_matrices.h"
 #include "image_generator.h"
-// #include "wifi.h"
+#include "wifi.h"
 #include "mqtt.h"
-#include "wifi_test_code.h"
+#include "esp_radar.h"
+#include"wifi_test_code.h"
 // #include "wifi_sensing.h"
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
@@ -27,7 +28,7 @@ char dataPrediction[100];
 extern float Amp[57][28];
 
 size_t peak_memory_usage = 0;
-sensingStruct sensing;
+// // sensingStruct sensing;
 void monitor_heap_memory()
 {
   size_t free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
@@ -41,95 +42,95 @@ void monitor_heap_memory()
          free, minimum, total, used, used_percentage, peak_memory_usage,
          (free < (total * 0.1)) ? " - Warning: Low free memory!" : "");
 }
-void colormap(float value, unsigned char *gray)
-{
-  *gray = static_cast<unsigned char>(value * 255);
-}
+// void colormap(float value, unsigned char *gray)
+// {
+//   *gray = static_cast<unsigned char>(value * 255);
+// }
 
-void generateResizedHeatmapFromMatrix(float matrix[55][50], unsigned char *image)
-{
-  float min_val = matrix[0][0];
-  float max_val = matrix[0][0];
+// void generateResizedHeatmapFromMatrix(float matrix[55][50], unsigned char *image)
+// {
+//   float min_val = matrix[0][0];
+//   float max_val = matrix[0][0];
 
-  for (int i = 0; i < 55; ++i)
-  {
-    for (int j = 0; j < 50; ++j)
-    {
-      min_val = std::min(min_val, matrix[i][j]);
-      max_val = std::max(max_val, matrix[i][j]);
-    }
-  }
+//   for (int i = 0; i < 55; ++i)
+//   {
+//     for (int j = 0; j < 50; ++j)
+//     {
+//       min_val = std::min(min_val, matrix[i][j]);
+//       max_val = std::max(max_val, matrix[i][j]);
+//     }
+//   }
 
-  for (int i = 0; i < RESIZED_IMAGE_SIZE; ++i)
-  {
-    for (int j = 0; j < RESIZED_IMAGE_SIZE; ++j)
-    {
-      float srcX = static_cast<float>(j) * 50 / RESIZED_IMAGE_SIZE;
-      float srcY = static_cast<float>(i) * 55 / RESIZED_IMAGE_SIZE;
+//   for (int i = 0; i < RESIZED_IMAGE_SIZE; ++i)
+//   {
+//     for (int j = 0; j < RESIZED_IMAGE_SIZE; ++j)
+//     {
+//       float srcX = static_cast<float>(j) * 50 / RESIZED_IMAGE_SIZE;
+//       float srcY = static_cast<float>(i) * 55 / RESIZED_IMAGE_SIZE;
 
-      int x0 = std::min(static_cast<int>(srcX), 49);
-      int y0 = std::min(static_cast<int>(srcY), 54);
+//       int x0 = std::min(static_cast<int>(srcX), 49);
+//       int y0 = std::min(static_cast<int>(srcY), 54);
 
-      float normalized_value = (max_val - min_val > 0) ? (matrix[y0][x0] - min_val) / (max_val - min_val) : 0;
-      colormap(normalized_value, &image[i * RESIZED_IMAGE_SIZE + j]);
-    }
-  }
-}
+//       float normalized_value = (max_val - min_val > 0) ? (matrix[y0][x0] - min_val) / (max_val - min_val) : 0;
+//       colormap(normalized_value, &image[i * RESIZED_IMAGE_SIZE + j]);
+//     }
+//   }
+// }
 
-void encodeToPNG(unsigned char *image, unsigned width, unsigned height, std::vector<unsigned char> &png_buffer)
-{
-  png_buffer.clear();
+// // void encodeToPNG(unsigned char *image, unsigned width, unsigned height, std::vector<unsigned char> &png_buffer)
+// // {
+// //   png_buffer.clear();
 
-  auto write_function = [](void *context, void *data, int size)
-  {
-    auto *buffer = static_cast<std::vector<unsigned char> *>(context);
-    buffer->insert(buffer->end(), (unsigned char *)data, (unsigned char *)data + size);
-  };
+// //   auto write_function = [](void *context, void *data, int size)
+// //   {
+// //     auto *buffer = static_cast<std::vector<unsigned char> *>(context);
+// //     buffer->insert(buffer->end(), (unsigned char *)data, (unsigned char *)data + size);
+// //   };
 
-  int error = stbi_write_png_to_func(write_function, &png_buffer, width, height, 1, image, width);
-  if (error)
-  {
-    printf("PNG encoded successfully, size: %zu bytes\n", png_buffer.size());
-  }
-  else
-  {
-    printf("Encoder error while creating PNG\n");
-  }
-}
+// //   int error = stbi_write_png_to_func(write_function, &png_buffer, width, height, 1, image, width);
+// //   if (error)
+// //   {
+// //     printf("PNG encoded successfully, size: %zu bytes\n", png_buffer.size());
+// //   }
+// //   else
+// //   {
+// //     printf("Encoder error while creating PNG\n");
+// //   }
+// // }
 
-void flattenImages(unsigned char images[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE],
-                   float flatImages[1][3][625][1], int width, int height)
-{
-  for (int imgIndex = 0; imgIndex < IMAGE_COUNT; ++imgIndex)
-  {
-    for (int i = 0; i < height; ++i)
-    {
-      for (int j = 0; j < width; ++j)
-      {
-        flatImages[0][imgIndex][i * width + j][0] =
-            static_cast<float>(images[imgIndex][i * width + j]) / 255.0f;
-      }
-    }
-  }
-}
+// void flattenImages(unsigned char images[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE],
+//                    float flatImages[1][3][625][1], int width, int height)
+// {
+//   for (int imgIndex = 0; imgIndex < IMAGE_COUNT; ++imgIndex)
+//   {
+//     for (int i = 0; i < height; ++i)
+//     {
+//       for (int j = 0; j < width; ++j)
+//       {
+//         flatImages[0][imgIndex][i * width + j][0] =
+//             static_cast<float>(images[imgIndex][i * width + j]) / 255.0f;
+//       }
+//     }
+//   }
+// }
 
-void generateImagesFromMatrices()
-{
-  unsigned char resizedImages[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE];
+// // void generateImagesFromMatrices()
+// {
+//   unsigned char resizedImages[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE];
 
-  for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
-  {
-    generateResizedHeatmapFromMatrix(csi_matrices[iteration], resizedImages[iteration]);
-    printf("Generated image for iteration %d\n", iteration);
+//   for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
+//   {
+//     generateResizedHeatmapFromMatrix(csi_matrices[iteration], resizedImages[iteration]);
+//     printf("Generated image for iteration %d\n", iteration);
 
-    // Optional: Encode to PNG
-    // std::vector<unsigned char> png_buffer;
-    // encodeToPNG(resizedImages[iteration], RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE, png_buffer);
-  }
+//     // Optional: Encode to PNG
+//     // std::vector<unsigned char> png_buffer;
+//     // encodeToPNG(resizedImages[iteration], RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE, png_buffer);
+//   }
 
-  flattenImages(resizedImages, flatImage, RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE);
-  printf("flatImage size %zu\n", sizeof(flatImage));
-}
+//   flattenImages(resizedImages, flatImage, RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE);
+//   printf("flatImage size %zu\n", sizeof(flatImage));
+// }
 
 //// all the code above will be moved to image_generator.h
 
@@ -146,7 +147,10 @@ namespace
 
 void setup()  
 {
-  app_main_wifi();
+
+  // App_main_wifi();
+  // WIFI_CONNECT();
+  // Sensing_routine(&sensing);
   // mqtt_app_start();
 
 
@@ -209,8 +213,8 @@ void setup()
   MicroPrintf("Memory used by tensors: %zu bytes", used_bytes);
 
  
-  generateImagesFromMatrices();
-  printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
+  // generateImagesFromMatrices();
+  // printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
 
   // for (int i = 0; i < input->dims->data[1]; i++)
   // {
@@ -229,6 +233,7 @@ void setup()
 
 void loop()
 {
+  App_main_wifi();
   // printf("bufDataString from main setup : %s\n", bufDataString_data);
   // // show bufDataString_data[700]
   

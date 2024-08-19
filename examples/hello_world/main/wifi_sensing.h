@@ -41,15 +41,15 @@ typedef enum
     BLIND,
 } PriseProfil1Struct;
 */
-typedef enum
-{
-    IDLE = 0,
-    READY,
-    HUMAN_DOUBT,
-    PET_DOUBT,
-    HUMAN_ALERT,
-    PET_ALERT,
-} PriseStatPredeStruct;
+// typedef enum
+// {
+//     IDLE = 0,
+//     READY,
+//     HUMAN_DOUBT,
+//     PET_DOUBT,
+//     HUMAN_ALERT,
+//     PET_ALERT,
+// } PriseStatPredeStruct;
 /*
 typedef struct
 {

@@ -1,5 +1,3 @@
-## TODO: GLOB is not a good way to collect files. Use explicit file list instead
-
 cmake_minimum_required(VERSION 3.5)
 
 set(tflite_dir "${CMAKE_CURRENT_SOURCE_DIR}/tensorflow/lite")
@@ -39,7 +37,7 @@ set(signal_srcs
           "${signal_dir}/src/kiss_fft_wrappers/kiss_fft_int16.cc"
           "${signal_dir}/src/kiss_fft_wrappers/kiss_fft_int32.cc")
 
-# remove sources which will be provided by esp_nn
+# Remove sources which will be provided by esp_nn
 list(REMOVE_ITEM srcs_kernels
           "${tfmicro_kernels_dir}/add.cc"
           "${tfmicro_kernels_dir}/conv.cc"
@@ -49,7 +47,7 @@ list(REMOVE_ITEM srcs_kernels
           "${tfmicro_kernels_dir}/pooling.cc"
           "${tfmicro_kernels_dir}/softmax.cc")
 
-FILE(GLOB esp_nn_kernels
+file(GLOB esp_nn_kernels
           "${tfmicro_kernels_dir}/esp_nn/*.cc")
 
 set(lib_srcs
@@ -87,16 +85,18 @@ if("${IDF_VERSION_MAJOR}.${IDF_VERSION_MINOR}" VERSION_GREATER "4.1")
 endif()
 
 idf_component_register(
-            SRCS "${lib_srcs}"
-            INCLUDE_DIRS "." "third_party/gemmlowp"
-                         "third_party/flatbuffers/include"
-                         "third_party/ruy"
-                         "third_party/kissfft"
-                         "signal/micro/kernels"
-                         "signal/src"
-                         "signal/src/kiss_fft_wrappers"
-            REQUIRES ${pub_req}
-            PRIV_REQUIRES ${priv_req})
+    SRCS "${lib_srcs}"
+    INCLUDE_DIRS "." "third_party/gemmlowp"
+                 "third_party/flatbuffers/include"
+                 "third_party/ruy"
+                 "third_party/kissfft"
+                 "signal/micro/kernels"
+                 "signal/src"
+                 "signal/src/kiss_fft_wrappers"
+                 "include"  # Added include directory
+    REQUIRES ${pub_req}
+    PRIV_REQUIRES ${priv_req}
+)
 
 # Reduce the level of paranoia to be able to compile TF sources
 target_compile_options(${COMPONENT_LIB} PRIVATE
@@ -112,7 +112,7 @@ if("${IDF_VERSION_MAJOR}.${IDF_VERSION_MINOR}" VERSION_GREATER_EQUAL "5.0")
   target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-error=stringop-overread)
 endif()
 
-# enable ESP-NN optimizations by Espressif
+# Enable ESP-NN optimizations by Espressif
 target_compile_options(${COMPONENT_LIB} PRIVATE -DESP_NN)
 
 set(common_flags -DTF_LITE_STATIC_MEMORY -DTF_LITE_DISABLE_X86_NEON -O3
@@ -127,9 +127,13 @@ target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:
                                       -fno-threadsafe-statics -Werror -Wno-return-type
                                       -Wno-strict-aliasing -std=gnu++14 >)
 
-# avoid issue of compiler internal error caused in `depthwise_conv_flaot.h
+# Avoid issue of compiler internal error caused in `depthwise_conv_flaot.h
 set_source_files_properties(${tfmicro_kernels_dir}/esp_nn/depthwise_conv.cc
                             PROPERTIES COMPILE_FLAGS -O2)
 
 target_compile_options(${COMPONENT_LIB} INTERFACE -DTF_LITE_STATIC_MEMORY)
 target_link_libraries(${COMPONENT_LIB} PRIVATE -lm)
+
+# Link external library
+target_link_libraries(${COMPONENT_LIB} INTERFACE "${CMAKE_CURRENT_LIST_DIR}/lib/${idf_target}/libesp-csi.a")
+

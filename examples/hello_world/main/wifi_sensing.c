@@ -136,7 +136,7 @@ void csi_data_print_task(void *arg)
             // ESP_LOGI(TAG, "================ CSI RECV1 ================");
             len += sprintf(buffer + len, "type,sequence,timestamp,taget_seq,taget,mac,rssi,rate,sig_mode,mcs,bandwidth,smoothing,not_sounding,aggregation,stbc,fec_coding,sgi,noise_floor,ampdu_cnt,channel,secondary_channel,local_timestamp,ant,sig_len,rx_state,len,first_word,data\n");
         }
-        info->valid_len = 112;
+        // info->valid_len = 112;
         len += sprintf(buffer + len, "CSI_DATA,%d,%u,%u,%s," MACSTR ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%u,%d,%d,%d,%d,%d,",
                        count++, esp_log_timestamp(), g_console_input_config.collect_number, g_console_input_config.collect_taget,
                        MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
@@ -193,17 +193,18 @@ void csi_data_print_task(void *arg)
     }
 }
 
-// void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
-// {
-//     wifi_csi_filtered_info_t *q_data = malloc(sizeof(wifi_csi_filtered_info_t) + info->valid_len);
-//     *q_data = *info;
-//     memcpy(q_data->valid_data, info->valid_data, info->valid_len);
+void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
+{
+    wifi_csi_filtered_info_t *q_data = malloc(sizeof(wifi_csi_filtered_info_t) + info->valid_len);
+    *q_data = *info;
+    memcpy(q_data->valid_data, info->valid_data, info->valid_len);
 
-//     if (!g_csi_info_queue || xQueueSend(g_csi_info_queue, &q_data, 0) == pdFALSE)
-//     {
-//         free(q_data);
-//     }
-// }
+    if (!g_csi_info_queue || xQueueSend(g_csi_info_queue, &q_data, 0) == pdFALSE)
+    {
+        ESP_LOGE(TAG, "Failed to send data to the queue");
+        free(q_data);
+    }
+}
 
 void radar_config(sensingStruct *sensing)
 { // 30:ae:a4:99:22:f4
@@ -215,8 +216,8 @@ void radar_config(sensingStruct *sensing)
         .filter_mac = {0x30, 0xae, 0xa4, 0x99, 0x22, 0xf4},
     };
     // esp_radar_init();
-    // esp_radar_set_config(&radar_config);
-    // esp_radar_start();
+    esp_radar_set_config(&radar_config);
+    esp_radar_start();
     sensing->radarStarted = 1;
 
     g_csi_info_queue = xQueueCreate(64, sizeof(void *));
