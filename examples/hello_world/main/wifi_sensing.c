@@ -68,7 +68,7 @@ int cmpt_pred;
 int k = 0;
 int init1 = 1;
 QueueHandle_t g_csi_info_queue = NULL;
-struct console_input_config
+static struct console_input_config
 {
     bool train_start;
     float predict_someone_threshold;
@@ -80,14 +80,16 @@ struct console_input_config
     char csi_output_type[16];
     char csi_output_format[16];
 } g_console_input_config = {
-    .predict_someone_threshold = 0.01,
-    .predict_move_threshold = 0.01,
-    .predict_buff_size = 5,
-    .predict_outliers_number = 2,
-    .train_start = false,
-    .collect_taget = "unknown",
-    .csi_output_type = "LLFT",
-    .csi_output_format = "decimal"};
+    false,
+    0.001,
+    0.001,
+    5,
+    2,
+    "unknown",
+    0,  // Assuming some default value for collect_number
+    "LLFT",
+    "decimal"
+};
 
 static TimerHandle_t g_collect_timer_handele = NULL;
 
@@ -300,8 +302,8 @@ void radar_config()
     esp_radar_set_config(&radar_config);
     esp_radar_start();
 
-    g_csi_info_queue = xQueueCreate(64, sizeof(void *));
-    xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 5 * 1024, NULL, 7, &myTaskHandlecsi, 0);
+    g_csi_info_queue = xQueueCreate(120, sizeof(void *));
+    xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 7 * 1024, NULL, 7, &myTaskHandlecsi, 0);
 }
 
 void Sensing_routine()
