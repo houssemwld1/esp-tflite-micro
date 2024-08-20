@@ -15,8 +15,8 @@ limitations under the License.
 
 #ifndef TENSORFLOW_LITE_MICRO_EXAMPLES_HELLO_WORLD_MAIN_FUNCTIONS_H_
 #define TENSORFLOW_LITE_MICRO_EXAMPLES_HELLO_WORLD_MAIN_FUNCTIONS_H_
-// #include <vector> // Ensure this line is included
-// #include <iostream> // Optional: only if needed elsewhere
+#include <vector> // Ensure this line is included
+#include <iostream> // Optional: only if needed elsewhere
 
 // Expose a C friendly interface for main functions.
 #ifdef __cplusplus
@@ -30,7 +30,7 @@ void setup();
 void monitor_heap_memory();
 void generateImagesFromMatrices();
 void flattenImages(unsigned char images[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE], float flatImages[1][3][625][1], int width, int height);
-// void encodeToPNG(unsigned char *image, unsigned width, unsigned height, std::vector<unsigned char> &png_buffer);
+void encodeToPNG(unsigned char *image, unsigned width, unsigned height, std::vector<unsigned char> &png_buffer);
 void generateResizedHeatmapFromMatrix(float matrix[55][50], unsigned char *image);
 
 // Runs one iteration of data gathering and inference. This should be called
