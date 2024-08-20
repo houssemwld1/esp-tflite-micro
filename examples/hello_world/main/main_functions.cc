@@ -14,8 +14,9 @@
 #include "wifi.h"
 #include "mqtt.h"
 #include "esp_radar.h"
-#include"wifi_test_code.h"
-// #include "wifi_sensing.h"
+// #include"wifi_test_code.h"
+#include "wifi_sensing.h"
+
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -28,7 +29,7 @@ char dataPrediction[100];
 extern float Amp[57][28];
 
 size_t peak_memory_usage = 0;
-// // sensingStruct sensing;
+sensingStruct sensing;
 void monitor_heap_memory()
 {
   size_t free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
@@ -149,8 +150,8 @@ void setup()
 {
 
   // App_main_wifi();
-  // WIFI_CONNECT();
-  // Sensing_routine(&sensing);
+  WIFI_CONNECT();
+  Sensing_routine();
   // mqtt_app_start();
 
 
@@ -233,7 +234,7 @@ void setup()
 
 void loop()
 {
-  App_main_wifi();
+  // App_main_wifi();
   // printf("bufDataString from main setup : %s\n", bufDataString_data);
   // // show bufDataString_data[700]
   

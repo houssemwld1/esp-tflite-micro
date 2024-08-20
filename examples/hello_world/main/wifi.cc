@@ -37,19 +37,8 @@ static const char *TAG = "wifi station";
 static int s_retry_num = 0;
 
 // ESP-NOW callback function
-void esp_now_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len) {
-    // Handle incoming data here
-    printf("esp_now_recv_cb\n");
-    ESP_LOGI(TAG, "Data received from MAC: "MACSTR", Length: %d", MAC2STR(mac_addr), len);
-    ESP_LOG_BUFFER_HEXDUMP(TAG, data, len, ESP_LOG_INFO);
-}
 
-// Initialize ESP-NOW
-void init_esp_now() {
-    printf("init_esp_now\n");
-    ESP_ERROR_CHECK(esp_now_init());
-    ESP_ERROR_CHECK(esp_now_register_recv_cb(esp_now_recv_cb));
-}
+
 
 // WiFi configuration
 static const uint8_t CONFIG_CSI_SEND_MAC[] = {0x30, 0xae, 0xa4, 0x99, 0x22, 0xf4};
@@ -121,7 +110,6 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     // Initialize ESP-NOW
-    init_esp_now();
 
     ESP_LOGI(TAG, "CSI configuration set and callback registered.");
     ESP_LOGI(TAG, "wifi_init_sta finished.");

@@ -113,30 +113,44 @@ int wifi_cmd_radar(int argc, char **argv)
 void cmd_register_radar(void)
 {
 }
+typedef struct
+{
+    char csi_data[1024];
+    char csi_radar[1024];
+    char csi_device_info[1024];
 
+} csiStruct;
+csiStruct csi;
 void csi_data_print_task(void *arg)
 {
-    // check if this works
-    printf("csi_data_print_task\n");
     wifi_csi_filtered_info_t *info = NULL;
-    char *buffer = malloc(5 * 1024);
+    char *buffer = malloc(8 * 1024);
     static uint32_t count = 0;
-    int k_prev;
-    int initCsi = 1;
-    int rssiPrev;
-    int initCsiFill = 1;
-    float tmp;
+
     while (xQueueReceive(g_csi_info_queue, &info, portMAX_DELAY))
     {
-        printf("xQueueReceive g_csi_info_queue \n");
         size_t len = 0;
         wifi_pkt_rx_ctrl_t *rx_ctrl = &info->rx_ctrl;
+
         if (!count)
         {
-            // ESP_LOGI(TAG, "================ CSI RECV1 ================");
+            ESP_LOGI(TAG, "================ CSI RECV1 ================");
             len += sprintf(buffer + len, "type,sequence,timestamp,taget_seq,taget,mac,rssi,rate,sig_mode,mcs,bandwidth,smoothing,not_sounding,aggregation,stbc,fec_coding,sgi,noise_floor,ampdu_cnt,channel,secondary_channel,local_timestamp,ant,sig_len,rx_state,len,first_word,data\n");
         }
-        // info->valid_len = 112;
+
+        if (!strcasecmp(g_console_input_config.csi_output_type, "LLFT"))
+        {
+            info->valid_len = info->valid_llft_len;
+        }
+        else if (!strcasecmp(g_console_input_config.csi_output_type, "HT-LFT"))
+        {
+            info->valid_len = info->valid_llft_len + info->valid_ht_lft_len;
+        }
+        else if (!strcasecmp(g_console_input_config.csi_output_type, "STBC-HT-LTF"))
+        {
+            info->valid_len = info->valid_llft_len + info->valid_ht_lft_len + info->valid_stbc_ht_lft_len;
+        }
+        info->valid_len = 112;
         len += sprintf(buffer + len, "CSI_DATA,%d,%u,%u,%s," MACSTR ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%u,%d,%d,%d,%d,%d,",
                        count++, esp_log_timestamp(), g_console_input_config.collect_number, g_console_input_config.collect_taget,
                        MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
@@ -144,6 +158,15 @@ void csi_data_print_task(void *arg)
                        rx_ctrl->aggregation, rx_ctrl->stbc, rx_ctrl->fec_coding, rx_ctrl->sgi,
                        rx_ctrl->noise_floor, rx_ctrl->ampdu_cnt, rx_ctrl->channel, rx_ctrl->secondary_channel,
                        rx_ctrl->timestamp, rx_ctrl->ant, rx_ctrl->sig_len, rx_ctrl->rx_state, info->valid_len, 0);
+
+        /* sprintf(csi.csi_data, "CSI_DATA,%d,%u,%u,%s," MACSTR ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%u,%d,%d,%d,%d,%d,",
+                 count++, esp_log_timestamp(), g_console_input_config.collect_number, g_console_input_config.collect_taget,
+                 MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
+                 rx_ctrl->mcs, rx_ctrl->cwb, rx_ctrl->smoothing, rx_ctrl->not_sounding,
+                 rx_ctrl->aggregation, rx_ctrl->stbc, rx_ctrl->fec_coding, rx_ctrl->sgi,
+                 rx_ctrl->noise_floor, rx_ctrl->ampdu_cnt, rx_ctrl->channel, rx_ctrl->secondary_channel,
+                 rx_ctrl->timestamp, rx_ctrl->ant, rx_ctrl->sig_len, rx_ctrl->rx_state, info->valid_len, 0);*/
+        // ESP_LOGI(TAG, "csi_output_format: %s", g_console_input_config.csi_output_format);
 
         if (!strcasecmp(g_console_input_config.csi_output_format, "base64"))
         {
@@ -155,43 +178,101 @@ void csi_data_print_task(void *arg)
         else
         {
             len += sprintf(buffer + len, "\"[%d", info->valid_data[0]);
-            sprintf(bufDataString_data, "%d", info->valid_data[0]);
 
             for (int i = 1; i < info->valid_len; i++)
             {
                 len += sprintf(buffer + len, ",%d", info->valid_data[i]);
-                snprintf(bufDataString_data + strlen(bufDataString_data), sizeof(bufDataString_data) - strlen(bufDataString_data), ",%d", info->valid_data[i]);
             }
-            // print some value of bufDataString_data
-            ESP_LOGI(TAG, "bufDataString_data: %s", bufDataString_data);
 
             len += sprintf(buffer + len, "]\"\n");
-            if (mutexPredict == 0)
-            {
-                uint8_t count_amp = 0;
-                for (int i = 52; i < info->valid_len; i++)
-                {
-                    {
-                        Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
-                        count_amp++;
-                    }
-                }
-                for (int i = 0; i < 52; i++)
-                {
-                    {
-
-                        Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
-                        count_amp++;
-                    }
-                }
-                k++;
-            }
         }
+        printf("%s", buffer);
+        sprintf(csi.csi_data, buffer);
 
-        free(buffer);
-        vTaskDelete(NULL);
+        free(info);
     }
+
+    free(buffer);
+    vTaskDelete(NULL);
 }
+// void csi_data_print_task(void *arg) original code
+// {
+//     // check if this works
+//     printf("csi_data_print_task\n");
+//     wifi_csi_filtered_info_t *info = NULL;
+//     char *buffer = malloc(5 * 1024);
+//     static uint32_t count = 0;
+//     int k_prev;
+//     int initCsi = 1;
+//     int rssiPrev;
+//     int initCsiFill = 1;
+//     float tmp;
+//     while (xQueueReceive(g_csi_info_queue, &info, portMAX_DELAY))
+//     {
+//         printf("xQueueReceive g_csi_info_queue \n");
+//         size_t len = 0;
+//         wifi_pkt_rx_ctrl_t *rx_ctrl = &info->rx_ctrl;
+//         if (!count)
+//         {
+//             // ESP_LOGI(TAG, "================ CSI RECV1 ================");
+//             len += sprintf(buffer + len, "type,sequence,timestamp,taget_seq,taget,mac,rssi,rate,sig_mode,mcs,bandwidth,smoothing,not_sounding,aggregation,stbc,fec_coding,sgi,noise_floor,ampdu_cnt,channel,secondary_channel,local_timestamp,ant,sig_len,rx_state,len,first_word,data\n");
+//         }
+//         // info->valid_len = 112;
+//         len += sprintf(buffer + len, "CSI_DATA,%d,%u,%u,%s," MACSTR ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%u,%d,%d,%d,%d,%d,",
+//                        count++, esp_log_timestamp(), g_console_input_config.collect_number, g_console_input_config.collect_taget,
+//                        MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
+//                        rx_ctrl->mcs, rx_ctrl->cwb, rx_ctrl->smoothing, rx_ctrl->not_sounding,
+//                        rx_ctrl->aggregation, rx_ctrl->stbc, rx_ctrl->fec_coding, rx_ctrl->sgi,
+//                        rx_ctrl->noise_floor, rx_ctrl->ampdu_cnt, rx_ctrl->channel, rx_ctrl->secondary_channel,
+//                        rx_ctrl->timestamp, rx_ctrl->ant, rx_ctrl->sig_len, rx_ctrl->rx_state, info->valid_len, 0);
+
+//         if (!strcasecmp(g_console_input_config.csi_output_format, "base64"))
+//         {
+//             size_t size = 0;
+//             mbedtls_base64_encode((uint8_t *)buffer + len, sizeof(buffer) - len, &size, (uint8_t *)info->valid_data, info->valid_len);
+//             len += size;
+//             len += sprintf(buffer + len, "\n");
+//         }
+//         else
+//         {
+//             len += sprintf(buffer + len, "\"[%d", info->valid_data[0]);
+//             sprintf(bufDataString_data, "%d", info->valid_data[0]);
+
+//             for (int i = 1; i < info->valid_len; i++)
+//             {
+//                 len += sprintf(buffer + len, ",%d", info->valid_data[i]);
+//                 snprintf(bufDataString_data + strlen(bufDataString_data), sizeof(bufDataString_data) - strlen(bufDataString_data), ",%d", info->valid_data[i]);
+//             }
+//             // print some value of bufDataString_data
+//             // ESP_LOGI(TAG, "bufDataString_data: %s", bufDataString_data);
+
+//             len += sprintf(buffer + len, "]\"\n");
+//             if (mutexPredict == 0)
+//             {
+//                 uint8_t count_amp = 0;
+//                 for (int i = 52; i < info->valid_len; i++)
+//                 {
+//                     {
+//                         Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
+//                         count_amp++;
+//                     }
+//                 }
+//                 for (int i = 0; i < 52; i++)
+//                 {
+//                     {
+
+//                         Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
+//                         count_amp++;
+//                     }
+//                 }
+//                 k++;
+//             }
+//         }
+
+//         free(buffer);
+//         vTaskDelete(NULL);
+//     }
+// }
 
 void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
 {
@@ -206,7 +287,7 @@ void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
     }
 }
 
-void radar_config(sensingStruct *sensing)
+void radar_config()
 { // 30:ae:a4:99:22:f4
 
     ESP_LOGI(TAG, "RADAR_CONFIG \n");
@@ -215,20 +296,16 @@ void radar_config(sensingStruct *sensing)
         .wifi_csi_filtered_cb = wifi_csi_raw_cb,
         .filter_mac = {0x30, 0xae, 0xa4, 0x99, 0x22, 0xf4},
     };
-    // esp_radar_init();
+    esp_radar_init();
     esp_radar_set_config(&radar_config);
     esp_radar_start();
-    sensing->radarStarted = 1;
 
     g_csi_info_queue = xQueueCreate(64, sizeof(void *));
-
     xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 5 * 1024, NULL, 7, &myTaskHandlecsi, 0);
 }
 
-void Sensing_routine(sensingStruct *sensing)
+void Sensing_routine()
 {
 
-    radar_config(sensing);
-    sensing->receiver_configured = 0;
-    sensing->sender_configured = 1;
+    radar_config();
 }

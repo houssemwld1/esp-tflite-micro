@@ -41,15 +41,15 @@ typedef enum
     BLIND,
 } PriseProfil1Struct;
 */
-// typedef enum
-// {
-//     IDLE = 0,
-//     READY,
-//     HUMAN_DOUBT,
-//     PET_DOUBT,
-//     HUMAN_ALERT,
-//     PET_ALERT,
-// } PriseStatPredeStruct;
+typedef enum
+{
+    IDLE = 0,
+    READY,
+    HUMAN_DOUBT,
+    PET_DOUBT,
+    HUMAN_ALERT,
+    PET_ALERT,
+} PriseStatPredeStruct;
 /*
 typedef struct
 {
@@ -143,7 +143,7 @@ static struct
 
 
 
-void radar_config(sensingStruct *sensing);
+void radar_config();
 // void init_WifiSensing(sensingStruct *sensing, nvs_handle_t nvs);
 // int wifi_initialize(void);
 void str2mac(sensingStruct *sensing, nvs_handle_t nvs);
@@ -161,7 +161,7 @@ void csi_data_print_task(void *arg);
 // void wifi_radar();
 // void publish_pred_result(sensingStruct *sensing);
 
-void Sensing_routine(sensingStruct *sensing);
+void Sensing_routine();
 // float max_pred(sensingStruct *sensing);
 // void state_process(sensingStruct *sensing);
 
