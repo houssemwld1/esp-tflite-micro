@@ -189,18 +189,18 @@ void csi_data_print_task(void *arg)
             len += sprintf(buffer + len, "]\"\n");
         }
         uint8_t count_amp = 0;
-        for (int i = 52; i < info->valid_len; i++)
+        for (int i = 52; i < info->valid_len; i = i + 4)
         {
             {
-                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
+                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
                 count_amp++;
             }
         }
-        for (int i = 0; i < 52; i++)
+        for (int i = 0; i < 52; i = i + 4)
         {
             {
 
-                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) ;
+                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
                 count_amp++;
             }
         }
@@ -209,14 +209,8 @@ void csi_data_print_task(void *arg)
 
         if (k >= 57)
         {
-            for (int i = 0; i < 57; i++)
-            {
-                for (int j = 0; j < 28; j++)
-                {
-                    printf("%f ", Amp[i][j]);
-                }
-                printf("\n");
-            }
+            printf("Ampl first  %f ", Amp[0][27]);
+            printf("Ampl last %f ", Amp[56][27]);
             k = 0;
         }
 
@@ -291,8 +285,8 @@ void radar_config()
     esp_radar_init();
     esp_radar_set_config(&radar_config);
     esp_radar_start();
-    g_csi_info_queue = xQueueCreate(120, sizeof(void *));
-    xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 7 * 1024, NULL, 7, NULL, 0);
+    g_csi_info_queue = xQueueCreate(64, sizeof(void *));
+    xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 7 * 1024, NULL, 2, NULL, 0);
 }
 
 //***************************MAIN **********************************//
