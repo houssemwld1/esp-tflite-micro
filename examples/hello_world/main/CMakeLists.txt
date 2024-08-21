@@ -12,3 +12,5 @@ idf_component_register(
     PRIV_REQUIRES spi_flash
     INCLUDE_DIRS "." "lib"
 )
+
+# make this cmake beautiful

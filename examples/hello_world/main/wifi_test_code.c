@@ -84,7 +84,7 @@ static bool s_reconnect = true;
 
 int mutexPredict = 0;
 int msg_id;
-float Amp[57][28];
+float Amp[51][56];
 char tmpString[700];
 int cmpt_pred;
 int k = 0;
@@ -161,15 +161,6 @@ void csi_data_print_task(void *arg)
                        rx_ctrl->noise_floor, rx_ctrl->ampdu_cnt, rx_ctrl->channel, rx_ctrl->secondary_channel,
                        rx_ctrl->timestamp, rx_ctrl->ant, rx_ctrl->sig_len, rx_ctrl->rx_state, info->valid_len, 0);
 
-        /* sprintf(csi.csi_data, "CSI_DATA,%d,%u,%u,%s," MACSTR ",%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%u,%d,%d,%d,%d,%d,",
-                 count++, esp_log_timestamp(), g_console_input_config.collect_number, g_console_input_config.collect_taget,
-                 MAC2STR(info->mac), rx_ctrl->rssi, rx_ctrl->rate, rx_ctrl->sig_mode,
-                 rx_ctrl->mcs, rx_ctrl->cwb, rx_ctrl->smoothing, rx_ctrl->not_sounding,
-                 rx_ctrl->aggregation, rx_ctrl->stbc, rx_ctrl->fec_coding, rx_ctrl->sgi,
-                 rx_ctrl->noise_floor, rx_ctrl->ampdu_cnt, rx_ctrl->channel, rx_ctrl->secondary_channel,
-                 rx_ctrl->timestamp, rx_ctrl->ant, rx_ctrl->sig_len, rx_ctrl->rx_state, info->valid_len, 0);*/
-        // ESP_LOGI(TAG, "csi_output_format: %s", g_console_input_config.csi_output_format);
-
         if (!strcasecmp(g_console_input_config.csi_output_format, "base64"))
         {
             size_t size = 0;
@@ -189,14 +180,14 @@ void csi_data_print_task(void *arg)
             len += sprintf(buffer + len, "]\"\n");
         }
         uint8_t count_amp = 0;
-        for (int i = 52; i < info->valid_len; i = i + 4)
+        for (int i = 56; i < info->valid_len; i += 2)
         {
             {
                 Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
                 count_amp++;
             }
         }
-        for (int i = 0; i < 52; i = i + 4)
+        for (int i = 0; i < 56; i += 2)
         {
             {
 
@@ -207,10 +198,16 @@ void csi_data_print_task(void *arg)
 
         k++;
 
-        if (k >= 57)
+        if (k >= 51)
         {
-            printf("Ampl first  %f ", Amp[0][27]);
-            printf("Ampl last %f ", Amp[56][27]);
+            for (int i = 0; i < 51; i++)
+            {
+                for (int j = 0; j < 56; j++)
+                {
+                    printf("%f ", Amp[i][j]);
+                }
+                printf("\n");
+            }
             k = 0;
         }
 
