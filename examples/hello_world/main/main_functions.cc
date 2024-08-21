@@ -11,25 +11,25 @@
 #include "esp_spiffs.h"
 #include "csi_matrices.h"
 #include "image_generator.h"
-#include "wifi.h"
+// #include "wifi.h"
 #include "mqtt.h"
 #include "esp_radar.h"
-// #include"wifi_test_code.h"
-#include "wifi_sensing.h"
+#include "wifi_test_code.h"
+// #include "wifi_sensing.h"
 
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-static float flatImage[1][3][625][1]; // Static to retain its value across function calls
+// static float flatImage[1][3][625][1]; // Static to retain its value across function calls
 extern esp_mqtt_client_handle_t client_mqtt;
-extern char bufDataString_data[700];
+// extern char bufDataString_data[700];
 char dataPrediction[100];
-extern float Amp[57][28];
+// extern float Amp[57][28];
 
 size_t peak_memory_usage = 0;
-sensingStruct sensing;
+// sensingStruct sensing;
 void monitor_heap_memory()
 {
   size_t free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
@@ -146,18 +146,14 @@ namespace
   uint8_t tensor_arena[kTensorArenaSize];
 }
 
-void setup()  
+void setup()
 {
 
-  // App_main_wifi();
-  WIFI_CONNECT();
-  Sensing_routine();
+  App_main_wifi();
+  // WIFI_CONNECT();
+  // Sensing_routine();
   // mqtt_app_start();
 
-
-  // Sensing_routine(&sensing);
-  // init mqtt
-  // priseStruct prise;
   // Initialize the TensorFlow Lite interpreter
   model = tflite::GetModel(g_model);
   if (model->version() != TFLITE_SCHEMA_VERSION)
@@ -213,7 +209,6 @@ void setup()
   size_t used_bytes = interpreter->arena_used_bytes();
   MicroPrintf("Memory used by tensors: %zu bytes", used_bytes);
 
- 
   // generateImagesFromMatrices();
   // printf("flatImage size from main setup : %zu\n", sizeof(flatImage));
 
@@ -237,7 +232,7 @@ void loop()
   // App_main_wifi();
   // printf("bufDataString from main setup : %s\n", bufDataString_data);
   // // show bufDataString_data[700]
-  
+
   // for (int i = 0; i < 700; i++)
   // {
   //   printf("csi_data %c", bufDataString_data[i]);

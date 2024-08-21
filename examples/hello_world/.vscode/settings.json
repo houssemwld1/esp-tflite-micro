@@ -18,6 +18,7 @@
         "bit": "cpp",
         "charconv": "cpp",
         "locale": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "wifi_test_code.h": "c"
     }
 }
