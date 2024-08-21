@@ -82,13 +82,14 @@ static EventGroupHandle_t s_wifi_event_group;
 static xQueueHandle g_csi_info_queue = NULL;
 static bool s_reconnect = true;
 
+int mutexPredict = 0;
+int msg_id;
+float Amp[57][28];
+char tmpString[700];
+int cmpt_pred;
+int k = 0;
 static const char *TAG = "app_main";
 csiStruct csi;
-
-
-
-
-
 
 void wifi_init(void)
 {
@@ -120,7 +121,6 @@ void wifi_init(void)
 
 #endif
 }
-
 static TimerHandle_t g_collect_timer_handele = NULL;
 
 void csi_data_print_task(void *arg)
@@ -188,7 +188,39 @@ void csi_data_print_task(void *arg)
 
             len += sprintf(buffer + len, "]\"\n");
         }
-        printf("%s", buffer);
+        uint8_t count_amp = 0;
+        for (int i = 52; i < info->valid_len; i++)
+        {
+            {
+                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
+                count_amp++;
+            }
+        }
+        for (int i = 0; i < 52; i++)
+        {
+            {
+
+                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) ;
+                count_amp++;
+            }
+        }
+
+        k++;
+
+        if (k >= 57)
+        {
+            for (int i = 0; i < 57; i++)
+            {
+                for (int j = 0; j < 28; j++)
+                {
+                    printf("%f ", Amp[i][j]);
+                }
+                printf("\n");
+            }
+            k = 0;
+        }
+
+        // printf("%s", buffer);
         // sprintf(csi.csi_data, buffer);
 
         free(info);
@@ -218,7 +250,6 @@ void wifi_csi_raw_cb(const wifi_csi_filtered_info_t *info, void *ctx)
         free(q_data);
     }
 }
-
 
 int wifi_initialize(void)
 {
@@ -267,8 +298,6 @@ void radar_config()
 //***************************MAIN **********************************//
 void App_main_wifi(void)
 {
-
-
 
     esp_err_t ret = nvs_flash_init();
 
