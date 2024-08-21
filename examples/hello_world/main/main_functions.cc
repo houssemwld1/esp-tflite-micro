@@ -10,17 +10,17 @@
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
 #include "csi_matrices.h"
-#include "image_generator.h"
+// #include "image_generator.h"
 // #include "wifi.h"
 #include "mqtt.h"
 #include "esp_radar.h"
-#include "wifi_test_code.h"
+// #include "wifi_test_code.h"
 // #include "wifi_sensing.h"
 
 // all the code until here will be moved to image_generator.h
 // Include the stb_image_write header
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
+// #include "stb_image_write.h"
 
 // static float flatImage[1][3][625][1]; // Static to retain its value across function calls
 extern esp_mqtt_client_handle_t client_mqtt;
@@ -149,7 +149,7 @@ namespace
 void setup()
 {
 
-  App_main_wifi();
+  // App_main_wifi();
   // WIFI_CONNECT();
   // Sensing_routine();
   // mqtt_app_start();
@@ -266,6 +266,6 @@ void loop()
 
   // HandleOutput(max_index);
 
-  monitor_heap_memory();
+  // monitor_heap_memory();
   inference_count += 1;
 }

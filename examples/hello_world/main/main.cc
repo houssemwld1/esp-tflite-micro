@@ -17,10 +17,15 @@ limitations under the License.
 #include <freertos/task.h>
 
 #include "main_functions.h"
+#include "wifi_test_code.h"
 
-extern "C" void app_main(void) {
+extern "C" void app_main(void)
+{
+  App_main_wifi();
   setup();
-  while (true) {
+
+  while (true)
+  {
     loop();
 
     // trigger one inference every 500ms

@@ -6,6 +6,14 @@ set(tfmicro_dir "${tflite_dir}/micro")
 set(tfmicro_frontend_dir "${tflite_dir}/experimental/microfrontend/lib")
 set(tfmicro_kernels_dir "${tfmicro_dir}/kernels")
 
+# Check IDF version using the script
+set(EXPECT_IDF_VERSION "5.0")  # Set your expected IDF version
+execute_process(COMMAND bash "check_idf_version.sh" ${EXPECT_IDF_VERSION}
+                WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/tools")
+
+# Get the IDF target
+idf_build_get_property(idf_target IDF_TARGET)
+
 file(GLOB srcs_micro
           "${tfmicro_dir}/*.cc"
           "${tfmicro_dir}/*.c")
@@ -75,6 +83,7 @@ set(lib_srcs
           "${tflite_dir}/kernels/internal/tensor_ctypes.cc"
           "${tflite_dir}/kernels/internal/reference/portable_tensor_utils.cc"
           "${tflite_dir}/kernels/internal/reference/comparisons.cc"
+          "${tfmicro_dir}/kernels/esp_nn/depthwise_conv.cc"  # Moved to handle the specific compile flag below
           "${tflite_dir}/schema/schema_utils.cc")
 
 set(priv_req)
@@ -93,7 +102,7 @@ idf_component_register(
                  "signal/micro/kernels"
                  "signal/src"
                  "signal/src/kiss_fft_wrappers"
-                 "include"  # Added include directory
+        	 "include"  # Added include directory
     REQUIRES ${pub_req}
     PRIV_REQUIRES ${priv_req}
 )
