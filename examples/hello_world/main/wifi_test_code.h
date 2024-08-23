@@ -103,6 +103,8 @@ static struct console_input_config
     "LLFT",
     "decimal"
 };
+#define BUFFER_SIZE 3 // Number of matrices in the buffer
+
 typedef struct
 {
     float buffer[BUFFER_SIZE][51][56]; // Buffer to hold CSI matrices

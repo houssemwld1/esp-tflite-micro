@@ -14,7 +14,7 @@
 // #include "wifi.h"
 #include "mqtt.h"
 #include "esp_radar.h"
-// #include "wifi_test_code.h"
+#include "wifi_test_code.h"
 // #include "wifi_sensing.h"
 
 // all the code until here will be moved to image_generator.h
@@ -28,7 +28,7 @@ extern esp_mqtt_client_handle_t client_mqtt;
 char dataPrediction[100];
 // extern float Amp[57][28];
 // circlular buffer
-extern CircularBuffer csi_buffer;
+extern CircularBuffer csiBuffer;
 size_t peak_memory_usage = 0;
 // sensingStruct sensing;
 void monitor_heap_memory()
@@ -228,39 +228,41 @@ void setup()
   inference_count = 0;
 }
 
-void loop()
+void loop(void *param)
 {
 
   while (1)
   {
     // Wait for a notification that new data is available
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
+    printf("notification received\n");
+    printf("csiBuffer.count : %d\n", csiBuffer.count);
+    printf("csiBuffer.head : %d\n", csiBuffer.head);
+    printf("csiBuffer.tail : %d\n", csiBuffer.tail);
     // Acquire mutex to read from the buffer
     if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
     {
-      if (csiBuffer.count > 0)
+      if (csiBuffer.count >= 3)
       {
 
         // Update the buffer
         csiBuffer.tail = (csiBuffer.tail + 1) % BUFFER_SIZE;
         csiBuffer.count--;
         // print the csibuffer all 
-        printf("CSI circular buffer\n");
-        for (int i = 0; i < 51; i++)
-        {
-          for (int j = 0; j < 56; j++)
-          {
-            printf("%f ", csiBuffer.buffer[csiBuffer.head][i][j]);
-          }
-          printf("\n");
-        }
-        xSemaphoreGive(csiBuffer.mutex);
+        // printf("==========================================================START===============================================================\n");
+        // for (int i = 0; i < 51; i++)
+        // {
+        //   for (int j = 0; j < 56; j++)
+        //   {
+        //     printf("%f ", csiBuffer.buffer[csiBuffer.head][i][j]);
+        //   }
+        //   printf("\n");
+        // }
+        // xSemaphoreGive(csiBuffer.mutex);
 
-        // Perform prediction with the CSI data
-        // ...
-
-        ESP_LOGI("TAG", "Prediction made");
+        // // Perform prediction with the CSI data
+        // // ...
+        // printf("==============================================================END===========================================================\n");
       }
       else
       {

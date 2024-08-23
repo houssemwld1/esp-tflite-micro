@@ -79,7 +79,6 @@ volatile char wifi_ssids[1024] = "";
 #define RECV_ESPNOW_CSI
 #define CONFIG_LESS_INTERFERENCE_CHANNEL 11
 #define RADER_EVALUATE_SERVER_PORT 3232
-#define BUFFER_SIZE 3 // Number of matrices in the buffer
 
 // static led_strip_t *g_strip_handle = NULL;
 static xQueueHandle g_csi_info_queue = NULL;
@@ -234,7 +233,7 @@ void csi_data_print_task(void *arg)
                     csiBuffer.tail = (csiBuffer.tail + 1) % BUFFER_SIZE;
                 }
                 csiBuffer.head = (csiBuffer.head + 1) % BUFFER_SIZE;
-
+                printf("head was added ");
                 xSemaphoreGive(csiBuffer.mutex);
 
                 // Notify the consumer task
@@ -343,7 +342,7 @@ void App_main_wifi(void)
     ESP_LOGI(TAG, " houssem modifications\n");
     ESP_LOGI(TAG, " \n");
 
-    esp_err_t errr = nvs_open("storage", NVS_READWRITE, &nvs);
+    // esp_err_t errr = nvs_open("storage", NVS_READWRITE, &nvs);
 
     wifi_config_t wifi_config;
     esp_err_t err = esp_wifi_get_config(ESP_IF_WIFI_STA, &wifi_config);
