@@ -25,6 +25,7 @@
 #include "lwip/sockets.h"
 
 //
+#include "freertos/semphr.h"
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
@@ -70,17 +71,19 @@ esp_err_t ret;
 esp_err_t ret;
 
 static int rssi;
-TaskHandle_t myTaskHandle = NULL;
-nvs_handle_t nvs;
+TaskHandle_t prediction_task_handle ;
+
 #define DEFAULT_SCAN_LIST_SIZE 20
 volatile char wifi_ssids[1024] = "";
-static EventGroupHandle_t s_wifi_event_group;
+
 #define RECV_ESPNOW_CSI
 #define CONFIG_LESS_INTERFERENCE_CHANNEL 11
 #define RADER_EVALUATE_SERVER_PORT 3232
+#define BUFFER_SIZE 3 // Number of matrices in the buffer
+
 // static led_strip_t *g_strip_handle = NULL;
 static xQueueHandle g_csi_info_queue = NULL;
-static bool s_reconnect = true;
+// static bool s_reconnect = true;
 
 int mutexPredict = 0;
 int msg_id;
@@ -90,6 +93,22 @@ int cmpt_pred;
 int k = 0;
 static const char *TAG = "app_main";
 csiStruct csi;
+
+// circular  buffer
+
+CircularBuffer csiBuffer;
+
+void init_circular_buffer()
+{
+    csiBuffer.head = 0;
+    csiBuffer.tail = 0;
+    csiBuffer.count = 0;
+    csiBuffer.mutex = xSemaphoreCreateMutex();
+    if (csiBuffer.mutex == NULL)
+    {
+        ESP_LOGE("TAG", "Failed to create mutex");
+    }
+}
 
 void wifi_init(void)
 {
@@ -200,13 +219,26 @@ void csi_data_print_task(void *arg)
 
         if (k >= 51)
         {
-            for (int i = 0; i < 51; i++)
+            if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
             {
-                for (int j = 0; j < 56; j++)
+                // Copy data to buffer
+                memcpy(csiBuffer.buffer[csiBuffer.head], Amp, sizeof(Amp));
+
+                if (csiBuffer.count < BUFFER_SIZE)
                 {
-                    printf("%f ", Amp[i][j]);
+                    csiBuffer.count++;
                 }
-                printf("\n");
+                else
+                {
+                    // Buffer is full, update tail
+                    csiBuffer.tail = (csiBuffer.tail + 1) % BUFFER_SIZE;
+                }
+                csiBuffer.head = (csiBuffer.head + 1) % BUFFER_SIZE;
+
+                xSemaphoreGive(csiBuffer.mutex);
+
+                // Notify the consumer task
+                xTaskNotifyGive(prediction_task_handle);
             }
             k = 0;
         }
