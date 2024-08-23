@@ -242,7 +242,7 @@ void loop(void *param)
     // Acquire mutex to read from the buffer
     if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
     {
-      if (csiBuffer.count >= 3)
+      if (csiBuffer.count >0)
       {
 
         // Update the buffer
@@ -258,7 +258,7 @@ void loop(void *param)
         //   }
         //   printf("\n");
         // }
-        // xSemaphoreGive(csiBuffer.mutex);
+        xSemaphoreGive(csiBuffer.mutex);
 
         // // Perform prediction with the CSI data
         // // ...
