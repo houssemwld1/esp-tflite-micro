@@ -369,6 +369,7 @@ void App_main_wifi(void)
 
         esp_wifi_connect();
     }
+    init_circular_buffer();
     radar_config();
     // setup();
 }

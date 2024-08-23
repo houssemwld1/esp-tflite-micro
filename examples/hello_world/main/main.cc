@@ -18,17 +18,17 @@ limitations under the License.
 
 #include "main_functions.h"
 #include "wifi_test_code.h"
-
+extern TaskHandle_t prediction_task_handle;
 extern "C" void app_main(void)
 {
   App_main_wifi();
   setup();
 
-  while (true)
-  {
-    loop();
-
-    // trigger one inference every 500ms
-    vTaskDelay(pdMS_TO_TICKS(500));
-  }
+  // while (true)
+  // {
+  // loop();
+  xTaskCreatePinnedToCore(loop, "prediction_task", 7 * 1024, NULL, 2, &prediction_task_handle, 1);
+  //   // trigger one inference every 500ms
+  //   vTaskDelay(pdMS_TO_TICKS(500));
+  // }
 }

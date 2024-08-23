@@ -27,7 +27,8 @@ extern esp_mqtt_client_handle_t client_mqtt;
 // extern char bufDataString_data[700];
 char dataPrediction[100];
 // extern float Amp[57][28];
-
+// circlular buffer
+extern CircularBuffer csi_buffer;
 size_t peak_memory_usage = 0;
 // sensingStruct sensing;
 void monitor_heap_memory()
@@ -229,43 +230,81 @@ void setup()
 
 void loop()
 {
-  // App_main_wifi();
-  // printf("bufDataString from main setup : %s\n", bufDataString_data);
-  // // show bufDataString_data[700]
 
-  // for (int i = 0; i < 700; i++)
-  // {
-  //   printf("csi_data %c", bufDataString_data[i]);
-  // }
-
-  if (interpreter->Invoke() != kTfLiteOk)
+  while (1)
   {
-    MicroPrintf("Invoke failed");
-    return;
+    // Wait for a notification that new data is available
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    // Acquire mutex to read from the buffer
+    if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
+    {
+      if (csiBuffer.count > 0)
+      {
+
+        // Update the buffer
+        csiBuffer.tail = (csiBuffer.tail + 1) % BUFFER_SIZE;
+        csiBuffer.count--;
+        // print the csibuffer all 
+        printf("CSI circular buffer\n");
+        for (int i = 0; i < 51; i++)
+        {
+          for (int j = 0; j < 56; j++)
+          {
+            printf("%f ", csiBuffer.buffer[csiBuffer.head][i][j]);
+          }
+          printf("\n");
+        }
+        xSemaphoreGive(csiBuffer.mutex);
+
+        // Perform prediction with the CSI data
+        // ...
+
+        ESP_LOGI("TAG", "Prediction made");
+      }
+      else
+      {
+        xSemaphoreGive(csiBuffer.mutex);
+      }
+    }
+    // App_main_wifi();
+    // printf("bufDataString from main setup : %s\n", bufDataString_data);
+    // // show bufDataString_data[700]
+
+    // for (int i = 0; i < 700; i++)
+    // {
+    //   printf("csi_data %c", bufDataString_data[i]);
+    // }
+
+    // if (interpreter->Invoke() != kTfLiteOk)
+    // {
+    //   MicroPrintf("Invoke failed");
+    //   return;
+    // }
+
+    // MicroPrintf("Inference output:");
+    // for (int i = 0; i < output->dims->data[1]; i++)
+    // {
+    //   printf("%f ", output->data.f[i]);
+    // }
+    // sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
+    // int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
+
+    // printf("\n");
+    // int max_index = 0;
+    // float max_value = output->data.f[0];
+    // for (int i = 1; i < output->dims->data[1]; i++)
+    // {
+    //   if (output->data.f[i] > max_value)
+    //   {
+    //     max_value = output->data.f[i];
+    //     max_index = i;
+    //   }
+    // }
+
+    // HandleOutput(max_index);
+
+    // monitor_heap_memory();
+    inference_count += 1;
   }
-
-  // MicroPrintf("Inference output:");
-  // for (int i = 0; i < output->dims->data[1]; i++)
-  // {
-  //   printf("%f ", output->data.f[i]);
-  // }
-  // sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
-  // int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
-
-  // printf("\n");
-  // int max_index = 0;
-  // float max_value = output->data.f[0];
-  // for (int i = 1; i < output->dims->data[1]; i++)
-  // {
-  //   if (output->data.f[i] > max_value)
-  //   {
-  //     max_value = output->data.f[i];
-  //     max_index = i;
-  //   }
-  // }
-
-  // HandleOutput(max_index);
-
-  // monitor_heap_memory();
-  inference_count += 1;
 }
