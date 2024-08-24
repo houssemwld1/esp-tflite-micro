@@ -44,41 +44,41 @@ void monitor_heap_memory()
          free, minimum, total, used, used_percentage, peak_memory_usage,
          (free < (total * 0.1)) ? " - Warning: Low free memory!" : "");
 }
-// void colormap(float value, unsigned char *gray)
-// {
-//   *gray = static_cast<unsigned char>(value * 255);
-// }
+void colormap(float value, unsigned char *gray)
+{
+  *gray = static_cast<unsigned char>(value * 255);
+}
 
-// void generateResizedHeatmapFromMatrix(float matrix[55][50], unsigned char *image)
-// {
-//   float min_val = matrix[0][0];
-//   float max_val = matrix[0][0];
+void generateResizedHeatmapFromMatrix(float matrix[55][50], unsigned char *image)
+{
+  float min_val = matrix[0][0];
+  float max_val = matrix[0][0];
 
-//   for (int i = 0; i < 55; ++i)
-//   {
-//     for (int j = 0; j < 50; ++j)
-//     {
-//       min_val = std::min(min_val, matrix[i][j]);
-//       max_val = std::max(max_val, matrix[i][j]);
-//     }
-//   }
+  for (int i = 0; i < 55; ++i)
+  {
+    for (int j = 0; j < 50; ++j)
+    {
+      min_val = std::min(min_val, matrix[i][j]);
+      max_val = std::max(max_val, matrix[i][j]);
+    }
+  }
 
-//   for (int i = 0; i < RESIZED_IMAGE_SIZE; ++i)
-//   {
-//     for (int j = 0; j < RESIZED_IMAGE_SIZE; ++j)
-//     {
-//       float srcX = static_cast<float>(j) * 50 / RESIZED_IMAGE_SIZE;
-//       float srcY = static_cast<float>(i) * 55 / RESIZED_IMAGE_SIZE;
+  for (int i = 0; i < RESIZED_IMAGE_SIZE; ++i)
+  {
+    for (int j = 0; j < RESIZED_IMAGE_SIZE; ++j)
+    {
+      float srcX = static_cast<float>(j) * 50 / RESIZED_IMAGE_SIZE;
+      float srcY = static_cast<float>(i) * 55 / RESIZED_IMAGE_SIZE;
 
-//       int x0 = std::min(static_cast<int>(srcX), 49);
-//       int y0 = std::min(static_cast<int>(srcY), 54);
+      int x0 = std::min(static_cast<int>(srcX), 49);
+      int y0 = std::min(static_cast<int>(srcY), 54);
 
-//       float normalized_value = (max_val - min_val > 0) ? (matrix[y0][x0] - min_val) / (max_val - min_val) : 0;
-//       colormap(normalized_value, &image[i * RESIZED_IMAGE_SIZE + j]);
-//     }
-//   }
-// }
-
+      float normalized_value = (max_val - min_val > 0) ? (matrix[y0][x0] - min_val) / (max_val - min_val) : 0;
+      colormap(normalized_value, &image[i * RESIZED_IMAGE_SIZE + j]);
+    }
+  }
+}
+/*
 // // void encodeToPNG(unsigned char *image, unsigned width, unsigned height, std::vector<unsigned char> &png_buffer)
 // // {
 // //   png_buffer.clear();
@@ -99,30 +99,31 @@ void monitor_heap_memory()
 // //     printf("Encoder error while creating PNG\n");
 // //   }
 // // }
+*/
 
-// void flattenImages(unsigned char images[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE],
-//                    float flatImages[1][3][625][1], int width, int height)
-// {
-//   for (int imgIndex = 0; imgIndex < IMAGE_COUNT; ++imgIndex)
-//   {
-//     for (int i = 0; i < height; ++i)
-//     {
-//       for (int j = 0; j < width; ++j)
-//       {
-//         flatImages[0][imgIndex][i * width + j][0] =
-//             static_cast<float>(images[imgIndex][i * width + j]) / 255.0f;
-//       }
-//     }
-//   }
-// }
+void flattenImages(unsigned char images[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE],
+                   float flatImages[1][3][625][1], int width, int height)
+{
+  for (int imgIndex = 0; imgIndex < IMAGE_COUNT; ++imgIndex)
+  {
+    for (int i = 0; i < height; ++i)
+    {
+      for (int j = 0; j < width; ++j)
+      {
+        flatImages[0][imgIndex][i * width + j][0] =
+            static_cast<float>(images[imgIndex][i * width + j]) / 255.0f;
+      }
+    }
+  }
+}
 
-// // void generateImagesFromMatrices()
+// void generateImagesFromMatrices()
 // {
 //   unsigned char resizedImages[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE];
 
 //   for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
 //   {
-//     generateResizedHeatmapFromMatrix(csi_matrices[iteration], resizedImages[iteration]);
+//     generateResizedHeatmapFromMatrix(csiBuffer.buffer[bufferIndex], resizedImages[iteration]);
 //     printf("Generated image for iteration %d\n", iteration);
 
 //     // Optional: Encode to PNG
@@ -235,17 +236,13 @@ void loop(void *param)
   {
     // Wait for a notification that new data is available
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    printf("notification received\n");
-    printf("csiBuffer.count : %d\n", csiBuffer.count);
-    printf("csiBuffer.head : %d\n", csiBuffer.head);
-    printf("csiBuffer.tail : %d\n", csiBuffer.tail);
+
     // Acquire mutex to read from the buffer
     if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
     {
-      if (csiBuffer.count > 0)
+      if (csiBuffer.count > 2)
       {
 
-        // Update the buffer
         csiBuffer.tail = (csiBuffer.tail + 1) % BUFFER_SIZE;
         csiBuffer.count--;
         // print the csibuffer all
@@ -254,7 +251,7 @@ void loop(void *param)
         {
           printf("K = %d ", k);
 
-          for (int i = 0; i < 1; i++)
+          for (int i = 0; i < 2; i++)
           {
             for (int j = 0; j < 55; j++)
             {
@@ -265,11 +262,17 @@ void loop(void *param)
           }
           printf("\n");
         }
+        printf("notification received\n");
+        printf("csiBuffer.count : %d\n", csiBuffer.count);
+        printf("csiBuffer.head after  : %d\n", (csiBuffer.head + 2) % BUFFER_SIZE);
+        printf("csiBuffer.tail  after : %d\n", (csiBuffer.tail + 2) % BUFFER_SIZE);
+
+        // // Perform prediction with the CSI data
+        // // ...
 
         xSemaphoreGive(csiBuffer.mutex);
         monitor_heap_memory();
-        // // Perform prediction with the CSI data
-        // // ...
+
         printf("==============================================================END===========================================================\n");
       }
       else
@@ -314,7 +317,7 @@ void loop(void *param)
 
     // HandleOutput(max_index);
 
-    // monitor_heap_memory();
-    inference_count += 1;
+    // // monitor_heap_memory();
+    // inference_count += 1;
   }
 }

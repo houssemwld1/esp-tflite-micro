@@ -202,7 +202,7 @@ void csi_data_print_task(void *arg)
         {
 
             {
-                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
+                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
                 count_amp++;
             }
         }
@@ -210,7 +210,7 @@ void csi_data_print_task(void *arg)
         {
 
             {
-                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
+                Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]);
                 count_amp++;
             }
         }
@@ -237,11 +237,10 @@ void csi_data_print_task(void *arg)
                 csiBuffer.head = (csiBuffer.head + 1) % BUFFER_SIZE;
                 printf("head was added ");
                 xSemaphoreGive(csiBuffer.mutex);
-
+                k = 0;
                 // Notify the consumer task
                 xTaskNotifyGive(prediction_task_handle);
             }
-            k = 0;
         }
 
         // printf("%s", buffer);
