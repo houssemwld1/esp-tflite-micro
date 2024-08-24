@@ -22,7 +22,7 @@
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
 // #include "stb_image_write.h"
 
-// static float flatImage[1][3][625][1]; // Static to retain its value across function calls
+static float flatImage[1][3][625][1]; // Static to retain its value across function calls
 extern esp_mqtt_client_handle_t client_mqtt;
 // extern char bufDataString_data[700];
 char dataPrediction[100];
@@ -256,8 +256,9 @@ void loop(void *param)
 
           for (int i = 0; i < 1; i++)
           {
-            for (int j = 0; j < 56; j++)
+            for (int j = 0; j < 55; j++)
             {
+              // printf("%d", j);
               printf("%f ", csiBuffer.buffer[k][i][j]);
             }
             printf("\n");

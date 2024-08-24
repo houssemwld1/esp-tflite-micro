@@ -107,7 +107,7 @@ static struct console_input_config
 
 typedef struct
 {
-    float buffer[BUFFER_SIZE][51][56]; // Buffer to hold CSI matrices
+    float buffer[BUFFER_SIZE][50][55]; // Buffer to hold CSI matrices
     int head;                          // Index for writing to the buffer
     int tail;                          // Index for reading from the buffer
     int count;                         // Number of items in the buffer

@@ -71,7 +71,7 @@ esp_err_t ret;
 esp_err_t ret;
 
 static int rssi;
-TaskHandle_t prediction_task_handle ;
+TaskHandle_t prediction_task_handle;
 
 #define DEFAULT_SCAN_LIST_SIZE 20
 volatile char wifi_ssids[1024] = "";
@@ -86,7 +86,7 @@ static xQueueHandle g_csi_info_queue = NULL;
 
 int mutexPredict = 0;
 int msg_id;
-float Amp[51][56];
+float Amp[50][55];
 // char tmpString[700];
 int cmpt_pred;
 int k = 0;
@@ -200,15 +200,16 @@ void csi_data_print_task(void *arg)
         uint8_t count_amp = 0;
         for (int i = 56; i < info->valid_len; i += 2)
         {
+
             {
                 Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
                 count_amp++;
             }
         }
-        for (int i = 0; i < 56; i += 2)
+        for (int i = 2; i < 56; i += 2)
         {
-            {
 
+            {
                 Amp[k][count_amp] = sqrt(info->valid_data[i] * info->valid_data[i] + info->valid_data[i + 1] * info->valid_data[i + 1]) / 100;
                 count_amp++;
             }
@@ -216,10 +217,11 @@ void csi_data_print_task(void *arg)
 
         k++;
 
-        if (k >= 51)
+        if (k > 50)
         {
             if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
             {
+                printf("Amp was added %f", Amp[0][54]);
                 // Copy data to buffer
                 memcpy(csiBuffer.buffer[csiBuffer.head], Amp, sizeof(Amp));
 
