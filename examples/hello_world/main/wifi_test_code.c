@@ -87,7 +87,7 @@ static xQueueHandle g_csi_info_queue = NULL;
 int mutexPredict = 0;
 int msg_id;
 float Amp[51][56];
-char tmpString[700];
+// char tmpString[700];
 int cmpt_pred;
 int k = 0;
 static const char *TAG = "app_main";
@@ -144,7 +144,7 @@ static TimerHandle_t g_collect_timer_handele = NULL;
 void csi_data_print_task(void *arg)
 {
     wifi_csi_filtered_info_t *info = NULL;
-    char *buffer = malloc(8 * 1024);
+    char *buffer = malloc(2 * 1024);
     static uint32_t count = 0;
 
     while (xQueueReceive(g_csi_info_queue, &info, portMAX_DELAY))
@@ -313,8 +313,8 @@ void radar_config()
     esp_radar_init();
     esp_radar_set_config(&radar_config);
     esp_radar_start();
-    g_csi_info_queue = xQueueCreate(64, sizeof(void *));
-    xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 7 * 1024, NULL, 2, NULL, 0);
+    g_csi_info_queue = xQueueCreate(50, sizeof(void *));
+    xTaskCreatePinnedToCore(csi_data_print_task, "csi_data_print", 3 * 1024, NULL, 2, NULL, 0);
 }
 
 //***************************MAIN **********************************//

@@ -242,27 +242,34 @@ void loop(void *param)
     // Acquire mutex to read from the buffer
     if (xSemaphoreTake(csiBuffer.mutex, portMAX_DELAY))
     {
-      if (csiBuffer.count >0)
+      if (csiBuffer.count > 0)
       {
 
         // Update the buffer
         csiBuffer.tail = (csiBuffer.tail + 1) % BUFFER_SIZE;
         csiBuffer.count--;
-        // print the csibuffer all 
-        // printf("==========================================================START===============================================================\n");
-        // for (int i = 0; i < 51; i++)
-        // {
-        //   for (int j = 0; j < 56; j++)
-        //   {
-        //     printf("%f ", csiBuffer.buffer[csiBuffer.head][i][j]);
-        //   }
-        //   printf("\n");
-        // }
-        xSemaphoreGive(csiBuffer.mutex);
+        // print the csibuffer all
+        printf("==========================================================START===============================================================\n");
+        for (int k = 0; k < 3; k++)
+        {
+          printf("K = %d ", k);
 
+          for (int i = 0; i < 1; i++)
+          {
+            for (int j = 0; j < 56; j++)
+            {
+              printf("%f ", csiBuffer.buffer[k][i][j]);
+            }
+            printf("\n");
+          }
+          printf("\n");
+        }
+
+        xSemaphoreGive(csiBuffer.mutex);
+        monitor_heap_memory();
         // // Perform prediction with the CSI data
         // // ...
-        // printf("==============================================================END===========================================================\n");
+        printf("==============================================================END===========================================================\n");
       }
       else
       {
