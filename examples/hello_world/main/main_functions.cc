@@ -9,7 +9,7 @@
 #include "esp_heap_caps.h"
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
-#include "csi_matrices.h"
+// #include "csi_matrices.h"
 // #include "image_generator.h"
 // #include "wifi.h"
 #include "mqtt.h"
@@ -117,23 +117,36 @@ void flattenImages(unsigned char images[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZE
   }
 }
 
-// void generateImagesFromMatrices()
-// {
-//   unsigned char resizedImages[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE];
+void generateImagesFromMatrices(int old, int news)
+{
+  unsigned char resizedImages[IMAGE_COUNT][RESIZED_IMAGE_SIZE * RESIZED_IMAGE_SIZE];
 
-//   for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
-//   {
-//     generateResizedHeatmapFromMatrix(csiBuffer.buffer[bufferIndex], resizedImages[iteration]);
-//     printf("Generated image for iteration %d\n", iteration);
+  // for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
+  // {
+  //   generateResizedHeatmapFromMatrix(csiBuffer.buffer[bufferIndex], resizedImages[iteration]);
+  //   printf("Generated image for iteration %d\n", iteration);
 
-//     // Optional: Encode to PNG
-//     // std::vector<unsigned char> png_buffer;
-//     // encodeToPNG(resizedImages[iteration], RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE, png_buffer);
-//   }
+  //   // Optional: Encode to PNG
+  //   // std::vector<unsigned char> png_buffer;
+  //   // encodeToPNG(resizedImages[iteration], RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE, png_buffer);
+  // }
+  int current = old;
+  for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
+  {
+    // Generate image from the current matrix in the buffer
+    generateResizedHeatmapFromMatrix(csiBuffer.buffer[current], resizedImages[iteration]);
+    printf("Generated image for iteration %d from buffer index %d\n", iteration, current);
 
-//   flattenImages(resizedImages, flatImage, RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE);
-//   printf("flatImage size %zu\n", sizeof(flatImage));
-// }
+    // Move to the next index, wrapping around if necessary
+    current = (current + 1) % BUFFER_SIZE;
+
+    // Stop if we've processed all available matrices in the buffer
+    if (current == news)
+      break;
+  }
+  flattenImages(resizedImages, flatImage, RESIZED_IMAGE_SIZE, RESIZED_IMAGE_SIZE);
+  printf("flatImage size %zu\n", sizeof(flatImage));
+}
 
 //// all the code above will be moved to image_generator.h
 
@@ -154,7 +167,7 @@ void setup()
   // App_main_wifi();
   // WIFI_CONNECT();
   // Sensing_routine();
-  // mqtt_app_start();
+  mqtt_app_start();
 
   // Initialize the TensorFlow Lite interpreter
   model = tflite::GetModel(g_model);
@@ -247,28 +260,72 @@ void loop(void *param)
         csiBuffer.count--;
         // print the csibuffer all
         printf("==========================================================START===============================================================\n");
-        for (int k = 0; k < 3; k++)
-        {
-          printf("K = %d ", k);
+        // for (int k = 0; k < 3; k++)
+        // {
+        //   printf("K = %d ", k);
 
-          for (int i = 0; i < 2; i++)
-          {
-            for (int j = 0; j < 55; j++)
-            {
-              // printf("%d", j);
-              printf("%f ", csiBuffer.buffer[k][i][j]);
-            }
-            printf("\n");
-          }
-          printf("\n");
-        }
+        //   for (int i = 0; i < 55; i++)
+        //   {
+        //     for (int j = 0; j < 1; j++)
+        //     {
+        //       // printf("%d", j);
+        //       printf("%f ", csiBuffer.buffer[k][i][j]);
+        //     }
+        //     printf("\n");
+        //   }
+        //   printf("\n");
+        // }
         printf("notification received\n");
         printf("csiBuffer.count : %d\n", csiBuffer.count);
         printf("csiBuffer.head after  : %d\n", (csiBuffer.head + 2) % BUFFER_SIZE);
         printf("csiBuffer.tail  after : %d\n", (csiBuffer.tail + 2) % BUFFER_SIZE);
-
+        int news = ((csiBuffer.head + 2) % BUFFER_SIZE);
+        int old = ((csiBuffer.tail + 2) % BUFFER_SIZE);
         // // Perform prediction with the CSI data
         // // ...
+
+        generateImagesFromMatrices(old, news);
+        for (int i = 0; i < input->dims->data[1]; i++)
+        {
+          for (int j = 0; j < input->dims->data[2]; j++)
+          {
+            for (int k = 0; k < input->dims->data[3]; k++)
+            {
+              input->data.f[(i * input->dims->data[2] + j) * input->dims->data[3] + k] = flatImage[0][i][j][k];
+            }
+          }
+        }
+        // perform inference
+
+        if (interpreter->Invoke() != kTfLiteOk)
+        {
+          MicroPrintf("Invoke failed");
+          return;
+        }
+
+        MicroPrintf("Inference output:");
+        for (int i = 0; i < output->dims->data[1]; i++)
+        {
+          printf("%f ", output->data.f[i]);
+        }
+        sprintf(dataPrediction, "%f %f %f %f", static_cast<double>((output->data.f[0])), static_cast<double>((output->data.f[1])), static_cast<double>((output->data.f[2])), static_cast<double>((output->data.f[3])));
+        int msg_id = esp_mqtt_client_publish(client_mqtt, "/houssy/data", dataPrediction, strlen(dataPrediction), 0, 0);
+
+        printf("\n");
+        int max_index = 0;
+        float max_value = output->data.f[0];
+        for (int i = 1; i < output->dims->data[1]; i++)
+        {
+          if (output->data.f[i] > max_value)
+          {
+            max_value = output->data.f[i];
+            max_index = i;
+          }
+        }
+
+        HandleOutput(max_index);
+
+        monitor_heap_memory();
 
         xSemaphoreGive(csiBuffer.mutex);
         monitor_heap_memory();

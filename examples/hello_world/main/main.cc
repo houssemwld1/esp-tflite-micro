@@ -27,7 +27,7 @@ extern "C" void app_main(void)
   // while (true)
   // {
   // loop();
-  xTaskCreatePinnedToCore(loop, "prediction_task", 2 * 1024, NULL, 2, &prediction_task_handle, 1);
+  xTaskCreatePinnedToCore(loop, "prediction_task", 10 * 1024, NULL, 2, &prediction_task_handle, 1);
   //   // trigger one inference every 500ms
   //   vTaskDelay(pdMS_TO_TICKS(500));
   // }

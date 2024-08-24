@@ -108,6 +108,18 @@ void init_circular_buffer()
         ESP_LOGE("TAG", "Failed to create mutex");
     }
 }
+void transpose_matrix_on_fly(float src[50][55], float dst[55][50])
+{
+    for (int i = 0; i < 50; i++)
+    {
+        for (int j = 0; j < 55; j++)
+        {
+            dst[j][i] = src[i][j];
+        }
+    }
+    // Debugging: Print the transposed matrix
+
+}
 
 void wifi_init(void)
 {
@@ -223,8 +235,7 @@ void csi_data_print_task(void *arg)
             {
                 printf("Amp was added %f", Amp[0][54]);
                 // Copy data to buffer
-                memcpy(csiBuffer.buffer[csiBuffer.head], Amp, sizeof(Amp));
-
+                transpose_matrix_on_fly(Amp, csiBuffer.buffer[csiBuffer.head]);
                 if (csiBuffer.count < BUFFER_SIZE)
                 {
                     csiBuffer.count++;
