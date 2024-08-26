@@ -133,6 +133,7 @@ void generateImagesFromMatrices(int old, int news)
   int current = old;
   for (int iteration = 0; iteration < IMAGE_COUNT; ++iteration)
   {
+    printf("current %d\n", current);
     // Generate image from the current matrix in the buffer
     generateResizedHeatmapFromMatrix(csiBuffer.buffer[current], resizedImages[iteration]);
     printf("Generated image for iteration %d from buffer index %d\n", iteration, current);
@@ -323,7 +324,7 @@ void loop(void *param)
           }
         }
 
-        HandleOutput(max_index);
+        // HandleOutput(max_index);
 
         monitor_heap_memory();
 

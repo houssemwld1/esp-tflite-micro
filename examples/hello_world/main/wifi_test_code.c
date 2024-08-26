@@ -62,7 +62,7 @@
 #include <esp_event.h>
 #include "esp_wifi_types.h"
 // #include "ota.h"
-#include "config.h"
+// #include "config.h"
 // #include "wps.h"
 // #include "main_functions.h"
 #include "wifi_test_code.h"
@@ -118,7 +118,6 @@ void transpose_matrix_on_fly(float src[50][55], float dst[55][50])
         }
     }
     // Debugging: Print the transposed matrix
-
 }
 
 void wifi_init(void)
@@ -252,6 +251,7 @@ void csi_data_print_task(void *arg)
                 // Notify the consumer task
                 xTaskNotifyGive(prediction_task_handle);
             }
+            // k = 0;
         }
 
         // printf("%s", buffer);
